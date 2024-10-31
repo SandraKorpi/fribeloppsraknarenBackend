@@ -109,11 +109,14 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public UserDto getUserById (long id){
+    public UserDto findById (long id){
         User user = getUserOrFail(id);
         return convertToUserDto(user);
     }
-
+    public User getUserEntityById(long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Användare med ID " + id + " hittades inte"));
+    }
 
     public User getUserOrFail(long id) {
         return userRepository.findById(id)
