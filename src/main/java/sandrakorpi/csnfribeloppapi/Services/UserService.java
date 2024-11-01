@@ -90,6 +90,7 @@ public class UserService implements UserDetailsService {
     public User convertToUser(UserDto userDto) {
 
         User user = new User();
+        user.setId(userDto.getId());
         user.setUserName(userDto.getUserName());
         user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword());

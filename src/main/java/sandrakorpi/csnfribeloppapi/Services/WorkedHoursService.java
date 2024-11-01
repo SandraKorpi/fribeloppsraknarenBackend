@@ -30,45 +30,27 @@ private final UserService userService;
 
     @Transactional
     public WorkedHoursDto saveWorkedHours(WorkedHoursDto workedHoursDto) {
-        // Hämta användaren baserat på userId
-        UserDto userDto = userService.findById(workedHoursDto.getUserId());
-        if (userDto == null) {
-            throw new ResourceNotFoundException("Användare med ID " + workedHoursDto.getUserId() + " hittades inte");
-        }
-
-        // Konvertera UserDto till User
-        User user = userService.convertToUser(userDto);
-
-        // Konvertera WorkedHoursDto till WorkedHours
-        WorkedHours workedHours = convertToEntity(workedHoursDto);
-        workedHours.setUser(user);
-        // Spara entiteten
-        WorkedHours savedWorkedHours = workedHoursRepository.saveAndFlush(workedHours);
-
-
-        // Konvertera tillbaka till DTO och returnera till controllern.
-        return convertToDto(savedWorkedHours);}
-    private WorkedHours convertToEntity(WorkedHoursDto dto){
-            WorkedHours workedHours = new WorkedHours();
-
+        try {
             // Hämta användaren baserat på userId
-            UserDto userDto = userService.findById(dto.getUserId());
-            if (userDto == null) {
-                throw new ResourceNotFoundException("Användare med ID " + dto.getUserId() + " hittades inte");
-            }
-
-            // Konvertera UserDto till User
+            UserDto userDto = userService.findById(workedHoursDto.getUserId());
             User user = userService.convertToUser(userDto);
 
-            // Sätt användaren i workedHours
-            workedHours.setUser(user);
-            workedHours.setHours(dto.getHours());
-            workedHours.setMonth(dto.getMonth());
-            workedHours.setDate(dto.getDate());
-            workedHours.setYear(dto.getYear());
+            // Skapa en ny WorkedHours-instans
+            WorkedHours workedHours = new WorkedHours();
+            workedHours.setHours(workedHoursDto.getHours());
+            workedHours.setMonth(workedHoursDto.getMonth());
+            workedHours.setDate(workedHoursDto.getDate());
+            workedHours.setYear(workedHoursDto.getYear());
+            workedHours.setUser(user); // Koppla användaren till WorkedHours
 
-            return workedHours;
+            // Spara instansen direkt
+            WorkedHours savedWorkedHours = workedHoursRepository.save(workedHours);
 
+            // Returnera DTO:n
+            return convertToDto(savedWorkedHours);
+        } catch (ResourceNotFoundException e) {
+            throw new RuntimeException("User not found: " + e.getMessage());
+        }
     }
 //Hämtar alla timmar totalt för en användare. Kanske onödigt?
     public List<WorkedHoursDto> getAllWorkedHours(){
@@ -129,8 +111,6 @@ private final UserService userService;
         workedHoursDto.setHours(workedHours.getHours());
 
         return workedHoursDto;
-
-
     }
 
 public WorkedHoursDto updateWorkedHours(Long id, int month, int date, WorkedHoursDto workedHoursDto){
