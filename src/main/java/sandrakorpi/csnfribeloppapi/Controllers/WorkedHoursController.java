@@ -56,8 +56,8 @@ return ResponseEntity.ok(total);
     @PostMapping("/addHours")
     public ResponseEntity<WorkedHoursDto> addWorkedHours(@RequestBody WorkedHoursDto workedHoursDto)
     {
-        System.out.println("Received WorkedHoursDto: " + workedHoursDto);
-       return ResponseEntity.status(201).body(workedHoursService.saveWorkedHours(workedHoursDto));
+       WorkedHoursDto savedHours = workedHoursService.saveWorkedHours(workedHoursDto);
+       return ResponseEntity.ok(savedHours);
     }
 //Tar bort specifikt arbetspass via id, vet ej hur användbar metod.. Kanske admin?
     @DeleteMapping("/deleteById/{id}")
