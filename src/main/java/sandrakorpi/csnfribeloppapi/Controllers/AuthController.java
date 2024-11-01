@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -45,7 +48,7 @@ public class AuthController {
 
     @PostMapping("/singIn")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginDto) {
-        try {
+      /*  try {
             User authenticatedUser = authService.authenticate(loginDto);
 
             String jwtToken = jwtTokenProvider.generateToken(authenticatedUser);
@@ -59,6 +62,26 @@ public class AuthController {
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-    }
+    } */
+        try {
+            User authenticatedUser = authService.authenticate(loginDto);
 
-}
+            // Hämta userId direkt från authenticatedUser
+            Long userId = authenticatedUser.getId();
+
+            // Skapa en Map för extra claims
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", userId); // Lägg till userId
+
+            // Generera token med extra claims
+            String jwtToken = jwtTokenProvider.generateToken(extraClaims, authenticatedUser);
+
+            LoginResponse loginResponse = LoginResponse.builder()
+                    .token(jwtToken)
+                    .expiresIn(jwtTokenProvider.getExpirationTime())
+                    .build();
+
+            return ResponseEntity.ok(loginResponse);
+        } catch (Exception exception) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }}}

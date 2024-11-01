@@ -2,8 +2,10 @@ package sandrakorpi.csnfribeloppapi.Services;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.WorkedHoursDto;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
@@ -16,6 +18,7 @@ import sandrakorpi.csnfribeloppapi.Repositories.WorkedHoursRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class WorkedHoursService {
@@ -27,10 +30,18 @@ private final UserService userService;
         this.workedHoursRepository = workedHoursRepository;
         this.userService = userService;
     }
+    public List<WorkedHoursDto> getWorkedHoursForUser(long userId) {
+        List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_Id(userId);
+        List<WorkedHoursDto> workedHoursDtoList = new ArrayList<>();
 
-    @Transactional
+        for (WorkedHours workedHours : workedHoursList) {
+            workedHoursDtoList.add(convertToDto(workedHours));
+        }
+
+        return workedHoursDtoList;
+    }
+        @Transactional
     public WorkedHoursDto saveWorkedHours(WorkedHoursDto workedHoursDto) {
-        try {
             // Hämta användaren baserat på userId
             UserDto userDto = userService.findById(workedHoursDto.getUserId());
             User user = userService.convertToUser(userDto);
@@ -43,48 +54,31 @@ private final UserService userService;
             workedHours.setYear(workedHoursDto.getYear());
             workedHours.setUser(user); // Koppla användaren till WorkedHours
 
-            // Spara instansen direkt
-            WorkedHours savedWorkedHours = workedHoursRepository.save(workedHours);
-
-            // Returnera DTO:n
-            return convertToDto(savedWorkedHours);
-        } catch (ResourceNotFoundException e) {
-            throw new RuntimeException("User not found: " + e.getMessage());
-        }
-    }
-//Hämtar alla timmar totalt för en användare. Kanske onödigt?
-    public List<WorkedHoursDto> getAllWorkedHours(){
-        List<WorkedHours> workedHoursList = workedHoursRepository.findAll();
-        if (workedHoursList.isEmpty()) {
-            throw new ResourceNotFoundException("Inga arbetade timmar hittades");}
-        //överför alla workedhours till lista med workedhoursdto.
-        List<WorkedHoursDto> workedHoursDtoList = new ArrayList<>();
-        for(WorkedHours workedHours : workedHoursList){
-            workedHoursDtoList.add(convertToDto(workedHours));
-        }
-                    return workedHoursDtoList;
+            // Spara instansen direkt och returnera DTO:n
+            return convertToDto(workedHoursRepository.save(workedHours));
     }
 
-    public double getWorkedHoursByYear(int year)
+
+    public double getWorkedHoursByYear(int year, long userId)
     {
-        List<WorkedHours> workedHoursList = workedHoursRepository.findByYear(year);
+        List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYear(userId, year);
         if (workedHoursList.isEmpty()) {
             throw new ResourceNotFoundException("Inga arbetade timmar hittades för året " + year);}
         return calculateTotalHours(workedHoursList);
     }
 
-    public double getWorkedHoursByMonthDate (int month, int date)
+    public double getWorkedHoursByMonthDate (long userId, int month, int date)
     {
-        List <WorkedHours> workedHoursList = workedHoursRepository.findByMonthAndDate(month, date);
+        List <WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndMonthAndDate(userId, month, date);
         if (workedHoursList.isEmpty()) {
             throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + date +" "+ month);}
         return calculateTotalHours(workedHoursList);
 
     }
 
-    public double getWorkedHoursByMonth (int month)
+    public double getWorkedHoursByMonth (long userId, int month)
     {
-        List<WorkedHours> workedHoursList = workedHoursRepository.findByMonth(month);
+        List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndMonth(userId, month);
         if (workedHoursList.isEmpty()) {
             throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + month);}
 
@@ -113,17 +107,14 @@ private final UserService userService;
         return workedHoursDto;
     }
 
-public WorkedHoursDto updateWorkedHours(Long id, int month, int date, WorkedHoursDto workedHoursDto){
-    WorkedHours workedHoursToUpdate = workedHoursRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Arbetade timmar hittades inte"));
-
+    @Transactional
+public WorkedHoursDto updateWorkedHours(long id, int month, int date, WorkedHoursDto workedHoursDto, long userId){
+    WorkedHours workedHoursToUpdate = workedHoursRepository.findByIdAndUser_Id(id, userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Du kan inte komma åt andras timmar!"));
     // Hämta användaren baserat på userId från workedHoursDto
-    Long userId = workedHoursDto.getUserId();
-    if (userId != null) {
+
         User user = userService.getUserEntityById(userId); // Använd den nya metoden för att hämta User-entity
         workedHoursToUpdate.setUser(user);
-    }
-
     // Uppdatera övriga fält i det befintliga objektet
     workedHoursToUpdate.setYear(workedHoursDto.getYear());
     workedHoursToUpdate.setMonth(month);
@@ -134,35 +125,65 @@ public WorkedHoursDto updateWorkedHours(Long id, int month, int date, WorkedHour
     return convertToDto(workedHoursRepository.save(workedHoursToUpdate));
 }
 
-public void deleteHours (long id)
+@Transactional
+public void deleteHours (long userId, long id)
 {
-  WorkedHours workedHoursToDelete =  getHoursOrFail(id);
-  workedHoursRepository.delete(workedHoursToDelete);
-
+    Optional<WorkedHours> workedHoursToDelete = workedHoursRepository.findByIdAndUser_Id(userId, id);
+    if (workedHoursToDelete.isPresent()) {
+        workedHoursRepository.delete(workedHoursToDelete.get());
+    } else {
+        throw new ResourceNotFoundException("Inga arbetade timmar hittades med id: " + id);
+    }
 }
-public void deleteByYear (int year)
+@Transactional
+public void deleteByYear (long userId, int year)
 {
     //Hämtar från databasen i en lista, går igenom listan och raderar alla timmar.
-    List<WorkedHours> workedHoursList = workedHoursRepository.findByYear(year);
+    List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYear(userId, year);
 
     workedHoursRepository.deleteAll(workedHoursList);
 }
-public void deleteHoursByMonth (int month)
+@Transactional
+public void deleteHoursByMonth (long userId, int month)
 {
     //Hämtar från databasen i en lista, går igenom listan och raderar alla timmar.
-    List<WorkedHours> workedHoursList = workedHoursRepository.findByMonth(month);
+    List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndMonth(userId, month);
 
     workedHoursRepository.deleteAll(workedHoursList);
 }
-
-public void deleteHoursByMonthDate(int month, int date)
+@Transactional
+public void deleteHoursByMonthDate(long userId, int month, int date)
 {
     //Hämtar från databasen i en lista, går igenom listan och raderar alla timmar.
-    List<WorkedHours> workedHoursList = workedHoursRepository.findByMonthAndDate(month, date);
+    List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndMonthAndDate(userId, month, date);
     workedHoursRepository.deleteAll(workedHoursList);
 }
+
+//Dessa metoder används inte längre. Eventuellt raderas??
+
     public WorkedHours getHoursOrFail(long id) {
         return workedHoursRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Det finns inga arbetade timmar med id:  " + id));
     }
+
+    public boolean isOwnedByUser(long workedHoursId, long userId) {
+        // Hämtar arbetstimman från databasen och kontrollerar att `userId` matchar
+        return workedHoursRepository.findById(workedHoursId)
+                .map(workedHours -> workedHours.getUserId().equals(userId))
+                .orElse(false);
+    }
+    //Hämtar alla timmar totalt för en användare. Kanske onödigt?
+    public List<WorkedHoursDto> getAllWorkedHours(){
+
+        List<WorkedHours> workedHoursList = workedHoursRepository.findAll();
+        if (workedHoursList.isEmpty()) {
+            throw new ResourceNotFoundException("Inga arbetade timmar hittades");}
+        //överför alla workedhours till lista med workedhoursdto.
+        List<WorkedHoursDto> workedHoursDtoList = new ArrayList<>();
+        for(WorkedHours workedHours : workedHoursList){
+            workedHoursDtoList.add(convertToDto(workedHours));
+        }
+        return workedHoursDtoList;
+    }
+
 }
