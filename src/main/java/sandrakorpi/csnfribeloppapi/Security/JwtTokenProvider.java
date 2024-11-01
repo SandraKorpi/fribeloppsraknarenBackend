@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import sandrakorpi.csnfribeloppapi.Models.User;
 
 import java.security.Key;
 import java.util.Date;
@@ -30,19 +31,40 @@ public class JwtTokenProvider {
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
-
+    // Ny metod för att extrahera användarens ID från token
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> claims.get("userId", Long.class));
+    }
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
     public String generateToken(UserDetails userDetails) {
+        // Generera token utan extra claims
+        return generateToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        // Kontrollera om userDetails är av typen User
+        if (userDetails instanceof User) {
+            User user = (User) userDetails; // Typkonvertera till User
+            Long userId = user.getId(); // Hämta userId
+
+            // Lägg till userId till claims
+            extraClaims.put("userId", userId);
+        }
+
+        return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+  /*  public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
-    }
+    } */
 
     public long getExpirationTime() {
         return jwtExpiration;
