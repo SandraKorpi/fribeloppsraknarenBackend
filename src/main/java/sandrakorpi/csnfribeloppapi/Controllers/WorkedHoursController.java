@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sandrakorpi.csnfribeloppapi.Dtos.WorkedHoursDto;
+import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
 import sandrakorpi.csnfribeloppapi.Services.WorkedHoursService;
@@ -35,7 +36,15 @@ public class WorkedHoursController {
 
         return ResponseEntity.ok(workedHoursDtoList);
     }
-
+//Ger inkomster per termin! Viktigaste metoden!!
+    @GetMapping("/totalForSemester/{semesterType}/{year}")
+    public ResponseEntity<Double> getHoursBySemester(@PathVariable SemesterType semesterType, int year, @RequestHeader("Authorization")String token)
+    {
+        String jwtToken = token.substring(7);
+        Long userId = jwtTokenProvider.extractUserId(jwtToken);
+        double total = workedHoursService.getWorkedHoursForSemester(userId, semesterType, year);
+        return ResponseEntity.ok(total);
+    }
 //Ger totala inkomsten för den månad som användaren söker på.
     @GetMapping("/month/{month}")
     public ResponseEntity<Double> getHoursByMonth (@PathVariable int month,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token)

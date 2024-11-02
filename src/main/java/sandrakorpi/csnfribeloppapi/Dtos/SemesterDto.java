@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 public class SemesterDto {
         private Long id;
-        private String name; // "Vår" eller "Höst"
+        private int year;
         private double allowance; // Fribelopp
         private List<Integer> months; // Månad (1-12)
         private SemesterType type; // Typ av termin (HT eller VT)

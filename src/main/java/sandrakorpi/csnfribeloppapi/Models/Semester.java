@@ -16,9 +16,8 @@ public class Semester {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String name; // Namnet på semestern
     private double incomeLimit; // Fribelopp
+    private int year;
     @Enumerated(EnumType.STRING)
     private SemesterType type; // HT eller VT
     @OneToMany(mappedBy = "semester")

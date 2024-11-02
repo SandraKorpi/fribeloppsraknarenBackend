@@ -9,14 +9,18 @@ import org.springframework.web.server.ResponseStatusException;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.WorkedHoursDto;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
+import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
 import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
 import sandrakorpi.csnfribeloppapi.Exceptions.UserAlreadyExistsException;
+import sandrakorpi.csnfribeloppapi.Models.Semester;
 import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
+import sandrakorpi.csnfribeloppapi.Repositories.SemesterRepository;
 import sandrakorpi.csnfribeloppapi.Repositories.UserRepository;
 import sandrakorpi.csnfribeloppapi.Repositories.WorkedHoursRepository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,10 +28,13 @@ import java.util.Optional;
 public class WorkedHoursService {
 
     private final WorkedHoursRepository workedHoursRepository;
-private final UserService userService;
+    private final SemesterService semesterService;
+    private final UserService userService;
 
-    public WorkedHoursService(WorkedHoursRepository workedHoursRepository, UserService userService) {
+    public WorkedHoursService(WorkedHoursRepository workedHoursRepository, SemesterService semesterService, UserService userService) {
         this.workedHoursRepository = workedHoursRepository;
+        this.semesterService = semesterService;
+
         this.userService = userService;
     }
     public List<WorkedHoursDto> getWorkedHoursForUser(long userId) {
@@ -45,7 +52,8 @@ private final UserService userService;
             // Hämta användaren baserat på userId
             UserDto userDto = userService.findById(workedHoursDto.getUserId());
             User user = userService.convertToUser(userDto);
-
+            //Räknar ut vilken termin inkomsten tillhör.
+            Semester semester = semesterService.getSemesterForMonthAndYear(workedHoursDto.getMonth(), workedHoursDto.getYear());
             // Skapa en ny WorkedHours-instans
             WorkedHours workedHours = new WorkedHours();
             workedHours.setHours(workedHoursDto.getHours());
@@ -53,6 +61,7 @@ private final UserService userService;
             workedHours.setDate(workedHoursDto.getDate());
             workedHours.setYear(workedHoursDto.getYear());
             workedHours.setUser(user); // Koppla användaren till WorkedHours
+            workedHours.setSemester(semester);//Sätter semester, då det inte tas in från användaren.
 
             // Spara instansen direkt och returnera DTO:n
             return convertToDto(workedHoursRepository.save(workedHours));
@@ -74,6 +83,27 @@ private final UserService userService;
             throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + date +" "+ month);}
         return calculateTotalHours(workedHoursList);
 
+    }
+
+    //Ska hämta timmarna arbetade per termin. Viktig!!!
+    public double getWorkedHoursForSemester(long userId, SemesterType semesterType, int year) {
+        List<WorkedHoursDto> workedHoursDtos = new ArrayList<>();
+        List<WorkedHours> workedHours = new ArrayList<>();
+
+        // Definiera vilka månader som tillhör respektive termin
+        List<Integer> months = new ArrayList<>();
+        if (semesterType == SemesterType.VT) {
+            months.addAll(Arrays.asList(1, 2, 3, 4, 5, 6)); // Vårtermin (VT)
+        } else if (semesterType == SemesterType.HT) {
+            months.addAll(Arrays.asList(7, 8, 9, 10, 11, 12)); // Hösttermin (HT)
+        }
+
+        // Hämta arbetade timmar för de specifika månaderna
+        for (Integer month : months) {
+            List<WorkedHours> hoursForMonth = workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, month);
+            workedHours.addAll(hoursForMonth);
+        }
+        return calculateTotalHours(workedHours);
     }
 
     public double getWorkedHoursByMonth (long userId, int month)
@@ -103,7 +133,6 @@ private final UserService userService;
         workedHoursDto.setMonth(workedHours.getMonth());
         workedHoursDto.setDate(workedHours.getDate());
         workedHoursDto.setHours(workedHours.getHours());
-
         return workedHoursDto;
     }
 
