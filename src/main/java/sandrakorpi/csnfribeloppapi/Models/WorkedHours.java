@@ -25,6 +25,10 @@ public class WorkedHours {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
+    @ManyToOne
+    @JoinColumn(name = "semester_id", referencedColumnName = "id") // Ny FK till Semester
+    private Semester semester; // Koppling till termin
+
 public Long getUserId(){
     return user.getId();
 }
