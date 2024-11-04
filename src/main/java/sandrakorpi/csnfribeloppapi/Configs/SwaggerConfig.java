@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(info = @Info(title = "Your API Title", version = "v1"))
 @SecurityScheme(
-        name = "Authorization",
+        name = "bearer-key",
         type = SecuritySchemeType.HTTP,
         scheme = "bearer",
         bearerFormat = "JWT",
@@ -25,14 +25,14 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                .info(new io.swagger.v3.oas.models.info.Info() // Fullständig väg för Info
+                .info(new io.swagger.v3.oas.models.info.Info()
                         .title("CSNfribelopp")
                         .version("1.0")
                         .description("API för appen CSNfribelopp"))
                 .components(new Components()
                         .addSecuritySchemes("bearer-key",
-                                new io.swagger.v3.oas.models.security.SecurityScheme() // Fullständig väg för SecurityScheme
-                                        .type(io.swagger.v3.oas.models.security.SecurityScheme.Type.HTTP) // Fullständig väg för Type
+                                new io.swagger.v3.oas.models.security.SecurityScheme()
+                                        .type(io.swagger.v3.oas.models.security.SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
                                         .description("Ange JWT-token här.")))
