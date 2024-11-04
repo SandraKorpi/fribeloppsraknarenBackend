@@ -7,8 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sandrakorpi.csnfribeloppapi.Dtos.WorkedHoursDto;
 import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
+import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
+import sandrakorpi.csnfribeloppapi.Services.CalculationService;
+import sandrakorpi.csnfribeloppapi.Services.SemesterService;
+import sandrakorpi.csnfribeloppapi.Services.UserService;
 import sandrakorpi.csnfribeloppapi.Services.WorkedHoursService;
 
 import java.time.Year;
@@ -18,10 +22,16 @@ import java.util.List;
 @RequestMapping("/api/worked-hours")
 public class WorkedHoursController {
     private final WorkedHoursService workedHoursService;
+    private final SemesterService semesterService;
+    private final UserService userService;
+    private final CalculationService calculationService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public WorkedHoursController(WorkedHoursService workedHoursService, JwtTokenProvider jwtTokenProvider) {
+    public WorkedHoursController(WorkedHoursService workedHoursService, SemesterService semesterService, UserService userService, CalculationService calculationService, JwtTokenProvider jwtTokenProvider) {
         this.workedHoursService = workedHoursService;
+        this.semesterService = semesterService;
+        this.userService = userService;
+        this.calculationService = calculationService;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
@@ -36,33 +46,33 @@ public class WorkedHoursController {
 
         return ResponseEntity.ok(workedHoursDtoList);
     }
-//Ger inkomster per termin! Viktigaste metoden!!
-    @GetMapping("/totalForSemester/{semesterType}/{year}")
+//Ger timmar arbetade per termin!
+    @GetMapping("/totalForSemester/year/{year}/semestertype/{semesterType}/")
     public ResponseEntity<Double> getHoursBySemester(@PathVariable SemesterType semesterType, int year, @RequestHeader("Authorization")String token)
     {
         String jwtToken = token.substring(7);
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
-        double total = workedHoursService.getWorkedHoursForSemester(userId, semesterType, year);
+        double total = workedHoursService.getWorkedHoursForYearSemester(userId, year, semesterType);
         return ResponseEntity.ok(total);
     }
 //Ger totala inkomsten för den månad som användaren söker på.
-    @GetMapping("/month/{month}")
-    public ResponseEntity<Double> getHoursByMonth (@PathVariable int month,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token)
+    @GetMapping("/year/{year}/month/{month}")
+    public ResponseEntity<Double> getHoursByYearMonth (@PathVariable int year, @PathVariable int month,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token)
     {
         //jwttoken kommer med barrier, substring -7 för att ta bort det och endast få token.
         String jwtToken = token.substring(7);
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
-       double total = workedHoursService.getWorkedHoursByMonth(userId, month);
+       double total = workedHoursService.getWorkedHoursByYearMonth(userId,year, month);
        return ResponseEntity.ok(total);
     }
 
     //Hämtar specifika timmar utifrån datum.
-    @GetMapping("/month/{month}/date/{date}")
-    public ResponseEntity<Double> getHoursByMonthAndDate (@PathVariable int month, @PathVariable int date,@Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token)
+    @GetMapping("/year/{year}/month/{month}/date/{date}")
+    public ResponseEntity<Double> getHoursByYearMonthAndDate (@PathVariable int year, @PathVariable int month, @PathVariable int date,@Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token)
     {
         String jwtToken = token.substring(7);
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
-        double total = workedHoursService.getWorkedHoursByMonthDate(userId, month, date);
+        double total = workedHoursService.getWorkedHoursByYearMonthDate(userId,year, month, date);
         return ResponseEntity.ok(total);
     }
 
@@ -77,6 +87,7 @@ public class WorkedHoursController {
         return ResponseEntity.ok(totalHours);
     }
 
+    //registrerar timmar för användaren.
     @PostMapping("/addHours")
     public ResponseEntity<WorkedHoursDto> addWorkedHours(@RequestBody WorkedHoursDto workedHoursDto)
     {
@@ -96,23 +107,24 @@ public class WorkedHoursController {
     }
 
     //Tar bort timmarna för ett specifikt datum i vald månad.
-    @DeleteMapping("/month/{month}/date/{date}")
-    public ResponseEntity<Void> deleteByDate(@PathVariable int month, @PathVariable int date,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token) {
+    @DeleteMapping("/year/{year}/month/{month}/date/{date}")
+    public ResponseEntity<Void> deleteByDate(@PathVariable int year, @PathVariable int month, @PathVariable int date,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token) {
 
         String jwtToken = token.substring(7);
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
-        workedHoursService.deleteHoursByMonthDate(userId, month, date);
+        workedHoursService.deleteHoursByMonthDate(userId,year, month, date);
         return ResponseEntity.noContent().build();
     }
 //Tar bort alla timmarna i vald månad.
-    @DeleteMapping("/month/{month}")
-    public ResponseEntity<Void> deleteByMonth(@PathVariable int month,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token) {
+    @DeleteMapping("/year/{year}/month/{month}")
+    public ResponseEntity<Void> deleteByMonth(@PathVariable int year, @PathVariable int month,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization") String token) {
         String jwtToken = token.substring(7);
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
-        workedHoursService.deleteHoursByMonth(userId, month);
+        workedHoursService.deleteHoursByYearMonth(userId, year, month);
         return ResponseEntity.noContent().build();
     }
 
+    //Raderar timmar för ett helt år. Är det anävndbart?
     @DeleteMapping("/year/{year}")
     public ResponseEntity<Void> deleteByYear(@PathVariable int year,@Parameter(description = "Bearer token", required = true) @RequestHeader ("Authorization")String token) {
         String jwtToken = token.substring(7);
@@ -121,7 +133,7 @@ public class WorkedHoursController {
         return ResponseEntity.noContent().build();
     }
 
-    //Ska kunna ta in pr, månad, eller datum för att leta upp timmar att uppdatera.
+    //Ska kunna ta in år, månad, eller datum för att leta upp timmar att uppdatera.
     @PutMapping("/worked-hours/{id}/month/{month}/date/{date}")
     public ResponseEntity<WorkedHoursDto> updateWorkedHours(@PathVariable Long id,@Parameter(description = "Bearer token", required = true)
                                                             @RequestHeader ("Authorization") String token,
@@ -132,4 +144,56 @@ public class WorkedHoursController {
         Long userId = jwtTokenProvider.extractUserId(jwtToken);
         return ResponseEntity.ok(workedHoursService.updateWorkedHours(id, month, date, workedHoursDto, userId));
     }
-}
+
+    //Räknar ut hur mycket en användare tjänat en månad.
+    @GetMapping("/monthly-income")
+    public ResponseEntity<Double> calculateMonthlyIncome(
+            @RequestParam long userId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        double income = calculationService.calculateMonthlyIncome(userId, year, month);
+        return ResponseEntity.ok(income);
+    }
+
+    //räknar ut vad användaren tjänat en termin
+    @GetMapping("/semester-income")
+    public ResponseEntity<Double> calculateSemesterIncome(
+            @RequestParam long userId,
+            @RequestParam int year,
+            @RequestParam SemesterType semesterType) {
+        double income = calculationService.calculateSemesterIncome(userId, year, semesterType);
+        return ResponseEntity.ok(income);
+    }
+
+    //Räknar ut vad användaren tjänat ett år
+    @GetMapping("/yearly-income")
+    public ResponseEntity<Double> calculateYearlyIncome(
+            @RequestParam long userId,
+            @RequestParam int year) {
+        double income = calculationService.calculateYearlyIncome(userId, year);
+        return ResponseEntity.ok(income);
+    }
+
+    //räknar ut vad användaren tjänat ett arbetspass.
+    @GetMapping("/shift-income")
+    public ResponseEntity<Double> calculateShiftIncome(
+            @RequestParam long userId,
+            @RequestParam long workedHoursId) {
+        double income = calculationService.calculateShiftIncome(userId, workedHoursId);
+        return ResponseEntity.ok(income);
+    }
+
+    //jämför inkomsten med fribeloppet. VIKTIGASTE METODEN!
+    @GetMapping("/{userId}/compare-income")
+    public ResponseEntity<String> compareSemesterIncome(
+            @PathVariable long userId,
+            @RequestParam int year,
+            @RequestParam SemesterType semesterType) {
+
+        double workedhours = workedHoursService.getWorkedHoursForYearSemester(userId, year, semesterType);
+
+        // Utför beräkningen baserat på workedHoursList
+        String result = calculationService.compareSemesterIncome(userId, year, semesterType);
+        return ResponseEntity.ok(result);
+
+}}

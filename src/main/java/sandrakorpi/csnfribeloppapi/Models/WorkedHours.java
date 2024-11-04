@@ -19,6 +19,8 @@ public class WorkedHours {
     private int month; // Månad (1-12)
     private int date; //Datum för arbete
     private int year; // År
+    private double hourlyRate; //timlön för timmarna
+    private double vacationPay; // semesterersättning i procent
 
 
     @ManyToOne

@@ -12,5 +12,7 @@ public class WorkedHoursDto {
     private int month; // Månad (1-12)
     private int date; // datum för arbete
     private int year; // År
+    private double hourlyRate; //timlön
+    private double vacationPay; //semesterersättning i procent
     private Long userId; // ID för kopplad användare
 }
