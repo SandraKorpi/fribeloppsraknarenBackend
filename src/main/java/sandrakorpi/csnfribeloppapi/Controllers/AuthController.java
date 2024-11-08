@@ -46,23 +46,9 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/singIn")
+    @PostMapping("/signIn")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginDto) {
-      /*  try {
-            User authenticatedUser = authService.authenticate(loginDto);
 
-            String jwtToken = jwtTokenProvider.generateToken(authenticatedUser);
-
-            LoginResponse loginResponse = LoginResponse.builder()
-                    .token(jwtToken)
-                    .expiresIn(jwtTokenProvider.getExpirationTime())
-                    .build();
-
-            return ResponseEntity.ok(loginResponse);
-        } catch (Exception exception) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-    } */
         try {
             User authenticatedUser = authService.authenticate(loginDto);
 

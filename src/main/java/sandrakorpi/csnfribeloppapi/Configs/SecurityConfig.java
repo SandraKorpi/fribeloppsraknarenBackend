@@ -83,7 +83,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of(ALLOWED_HEADERS));
         configuration.setExposedHeaders(List.of(ALLOWED_HEADERS));
         configuration.setAllowedMethods(List.of(POST.name(), GET.name(), PUT.name(), DELETE.name(), PATCH.name(), OPTIONS.name()));
-
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
