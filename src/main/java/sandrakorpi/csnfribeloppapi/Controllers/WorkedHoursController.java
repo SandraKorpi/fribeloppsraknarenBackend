@@ -110,32 +110,43 @@ public class WorkedHoursController {
 
     // Ska kunna ta in år, månad, eller datum för att leta upp timmar att uppdatera.
     @PutMapping("/worked-hours/{id}/month/{month}/date/{date}")
-    public ResponseEntity<WorkedHoursDto> updateWorkedHours(@PathVariable Long id, @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token, @PathVariable int month, @PathVariable int date, @RequestBody WorkedHoursDto workedHoursDto) {
+    public ResponseEntity<WorkedHoursDto> updateWorkedHours(@PathVariable long id, @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token, @PathVariable int month, @PathVariable int date, @RequestBody WorkedHoursDto workedHoursDto) {
         Long userId = extractUserIdFromToken(token);
         return ResponseEntity.ok(workedHoursService.updateWorkedHours(id, month, date, workedHoursDto, userId));
     }
 
     // Räknar ut hur mycket en användare tjänat en månad.
-    @GetMapping("/monthly-income")
-    public ResponseEntity<Double> calculateMonthlyIncome(@RequestParam long userId, @RequestParam int year, @RequestParam int month) {
+    @GetMapping("/monthly-income/{year}/{month}")
+    public ResponseEntity<Double> calculateMonthlyIncome(@RequestHeader("Authorization") String token,
+                                                         @PathVariable int year,
+                                                         @PathVariable int month) {
+        Long userId = extractUserIdFromToken(token);
         double income = calculationService.calculateMonthlyIncome(userId, year, month);
         return ResponseEntity.ok(income);
     }
 
+
+
     // Räknar ut vad användaren tjänat en termin.
-    @GetMapping("/semester-income")
-    public ResponseEntity<Double> calculateSemesterIncome(@RequestParam long userId, @RequestParam int year, @RequestParam SemesterType semesterType) {
-        double income = calculationService.calculateSemesterIncome(userId, year, semesterType);
+    @GetMapping("/semester-income/{year}/{semester}")
+    public ResponseEntity<Double> calculateSemesterIncome(@RequestHeader("Authorization") String token,
+                                                          @PathVariable int year,
+                                                          @PathVariable SemesterType semester) {
+        Long userId = extractUserIdFromToken(token);
+        double income = calculationService.calculateSemesterIncome(userId, year, semester);
         return ResponseEntity.ok(income);
     }
 
-    // Räknar ut vad användaren tjänat ett år.
-    @GetMapping("/yearly-income")
-    public ResponseEntity<Double> calculateYearlyIncome(@RequestParam long userId, @RequestParam int year) {
+//räknar ut vad användaren tjänat på ett år.
+    @GetMapping("/yearly-income/{year}")
+    public ResponseEntity<Double> calculateYearlyIncome(@RequestHeader("Authorization") String token,
+                                                        @PathVariable int year) {
+        Long userId = extractUserIdFromToken(token);
         double income = calculationService.calculateYearlyIncome(userId, year);
         return ResponseEntity.ok(income);
     }
 
+//oanvändbar metod pga kan ej hämta workedhourid i frontend.....
     // Räknar ut vad användaren tjänat ett arbetspass.
     @GetMapping("/shift-income")
     public ResponseEntity<Double> calculateShiftIncome(@RequestParam long userId, @RequestParam long workedHoursId) {
