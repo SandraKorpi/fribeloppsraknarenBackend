@@ -54,7 +54,7 @@ public class WorkedHoursController {
     }
 
     // Hämtar specifika timmar utifrån datum.
-    @GetMapping("/getByDate/year/{year}/month/{month}/date/{date}")
+   @GetMapping("/getByDate/year/{year}/month/{month}/date/{date}")
     public ResponseEntity<Double> getHoursByYearMonthAndDate(@PathVariable int year, @PathVariable int month, @PathVariable int date, @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token) {
         Long userId = extractUserIdFromToken(token);
         double total = workedHoursService.getWorkedHoursByYearMonthDate(userId, year, month, date);
@@ -108,12 +108,20 @@ public class WorkedHoursController {
         return ResponseEntity.noContent().build();
     }
 
-    // Ska kunna ta in år, månad, eller datum för att leta upp timmar att uppdatera.
-    @PutMapping("/worked-hours/{id}/month/{month}/date/{date}")
-    public ResponseEntity<WorkedHoursDto> updateWorkedHours(@PathVariable long id, @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token, @PathVariable int month, @PathVariable int date, @RequestBody WorkedHoursDto workedHoursDto) {
-        Long userId = extractUserIdFromToken(token);
-        return ResponseEntity.ok(workedHoursService.updateWorkedHours(id, month, date, workedHoursDto, userId));
+    // uppdatering söker på userid för att hitta användarens timme på rätt datum
+    @PutMapping("/year/{year}/month/{month}/date/{date}")
+    public ResponseEntity<WorkedHoursDto> updateWorkedHoursByUserId(
+            @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token,
+            @PathVariable int year,
+            @PathVariable int month,
+            @PathVariable int date,
+            @RequestBody WorkedHoursDto workedHoursDto) {
+
+        Long extractedUserId = extractUserIdFromToken(token);
+        WorkedHoursDto updatedWorkedHours = workedHoursService.updateWorkedHoursByUserId(extractedUserId,year, month, date, workedHoursDto);
+        return ResponseEntity.ok(updatedWorkedHours);
     }
+
 
     // Räknar ut hur mycket en användare tjänat en månad.
     @GetMapping("/monthly-income/{year}/{month}")
