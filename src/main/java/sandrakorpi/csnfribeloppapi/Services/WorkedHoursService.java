@@ -84,14 +84,17 @@ public class WorkedHoursService {
         return calculateTotalHours(workedHoursList);
     }
 
-    public double getWorkedHoursByYearMonthDate (long userId, int year, int month, int date)
-    {
-        List <WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYearAndMonthAndDate(userId,year, month, date);
-        if (workedHoursList.isEmpty()) {
-            throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + date +" "+ month);}
-        return calculateTotalHours(workedHoursList);
 
+    public double getWorkedHoursByYearMonthDate(long userId, int year, int month, int date) {
+        Optional<WorkedHours> workedHours = workedHoursRepository.findByUser_IdAndYearAndMonthAndDate(userId, year, month, date);
+        if (workedHours.isPresent()) {
+            WorkedHoursDto workedHoursDto = convertToDto(workedHours.get());
+            return workedHoursDto.getHours();
+        } else {
+            throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + date + " " + month + " " + year);
+        }
     }
+
 
     //Ska hämta timmarna arbetade per termin. Viktig!!!
     public double getWorkedHoursForYearSemester(long userId, int year, SemesterType semesterType) {
@@ -155,8 +158,24 @@ public WorkedHoursDto updateWorkedHours(long id, int month, int date, WorkedHour
     // Spara de uppdaterade timmarna
     return convertToDto(workedHoursRepository.save(workedHoursToUpdate));
 }
+//uppdetera workedhours genom att ange userid ist för workedhoursid
+public WorkedHoursDto updateWorkedHoursByUserId(Long userId, int year,  int month, int date, WorkedHoursDto workedHoursDto) {
+    Optional<WorkedHours> existingWorkedHours = workedHoursRepository.findByUser_IdAndYearAndMonthAndDate(userId, year, month, date);
 
-@Transactional
+    if (existingWorkedHours.isPresent()) {
+        WorkedHours workedHours = existingWorkedHours.get();
+        workedHours.setHours(workedHoursDto.getHours());
+        workedHours.setHourlyRate(workedHoursDto.getHourlyRate());
+        workedHours.setVacationPay(workedHoursDto.getVacationPay());
+        workedHoursRepository.save(workedHours);
+        return convertToDto(workedHours);
+    } else {
+        throw new ResourceNotFoundException("Inga arbetade timmar hittades för användare, månad och datum.");
+    }
+}
+
+
+    @Transactional
 public void deleteHours (long userId, long id)
 {
     Optional<WorkedHours> workedHoursToDelete = workedHoursRepository.findByIdAndUser_Id(userId, id);
@@ -182,13 +201,18 @@ public void deleteHoursByYearMonth (long userId, int year, int month)
 
     workedHoursRepository.deleteAll(workedHoursList);
 }
-@Transactional
-public void deleteHoursByMonthDate(long userId,int year, int month, int date)
-{
-    //Hämtar från databasen i en lista, går igenom listan och raderar alla timmar.
-    List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYearAndMonthAndDate(userId, year, month, date);
-    workedHoursRepository.deleteAll(workedHoursList);
-}
+
+    @Transactional
+    public void deleteHoursByMonthDate(long userId, int year, int month, int date) {
+        Optional<WorkedHours> workedHours = workedHoursRepository.findByUser_IdAndYearAndMonthAndDate(userId, year, month, date);
+
+        if (workedHours.isEmpty()) {
+            throw new ResourceNotFoundException("Inga arbetade timmar hittades för användare med id " + userId + " för datum " + date + "/" + month + "/" + year);
+        }
+        WorkedHours deleteHour = workedHours.get();
+        workedHoursRepository.delete(deleteHour);
+    }
+
 
 //Dessa metoder används inte längre. Eventuellt raderas??
 

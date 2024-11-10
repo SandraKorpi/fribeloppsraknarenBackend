@@ -13,8 +13,10 @@ import java.util.Optional;
 
 @Repository
 public interface WorkedHoursRepository extends JpaRepository<WorkedHours, Long> {
-    List<WorkedHours> findByUser_IdAndYearAndMonthAndDate(long userId, int year, int month, int date);
-  List<WorkedHours> findByUser_IdAndYearAndMonth(long userId, int year, Integer month);
+   // List<WorkedHours> findByUser_IdAndYearAndMonthAndDate(long userId, int year, int month, int date);
+  Optional<WorkedHours> findByUser_IdAndYearAndMonthAndDate(long userId, int year, int month, int date);
+
+  List<WorkedHours> findByUser_IdAndYearAndMonth(long userId, int year, int month);
   List<WorkedHours> findByYearAndMonth(int year, int month);
     List<WorkedHours> findByUser_Id(Long userId); // Hämta arbetstimmar baserat på userId i User
     Optional<WorkedHours> findByIdAndUser_Id(Long id, Long userId);
