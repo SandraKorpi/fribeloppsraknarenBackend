@@ -79,11 +79,14 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowCredentials(true);
-        //swagger
+        // Ange tillåtna headers och exponerade headers
         configuration.setAllowedHeaders(List.of(ALLOWED_HEADERS));
         configuration.setExposedHeaders(List.of(ALLOWED_HEADERS));
+        // Ange tillåtna HTTP-metoder
         configuration.setAllowedMethods(List.of(POST.name(), GET.name(), PUT.name(), DELETE.name(), PATCH.name(), OPTIONS.name()));
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        // Lägg till varje origin som en enskild sträng i listan
+        configuration.setAllowedOrigins(List.of("http://localhost:3004", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
