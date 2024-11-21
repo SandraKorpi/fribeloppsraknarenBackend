@@ -6,10 +6,8 @@ import lombok.*;
 
 @Entity
 @Data
-@AllArgsConstructor
+@AllArgsConstructor // Lombok skapar en konstruktor för alla fält
 @NoArgsConstructor
-@Getter
-@Setter
 public class WorkedHours {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,6 +20,14 @@ public class WorkedHours {
     private double hourlyRate; //timlön för timmarna
     private double vacationPay; // semesterersättning i procent
 
+    public WorkedHours(double hours, int month, int date, int year, double hourlyRate, double vacationPay) {
+        this.hours = hours;
+        this.month = month;
+        this.date = date;
+        this.year = year;
+        this.hourlyRate = hourlyRate;
+        this.vacationPay = vacationPay;
+    }
 
     @ManyToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
@@ -31,7 +37,9 @@ public class WorkedHours {
     @JoinColumn(name = "semester_id", referencedColumnName = "id") // Ny FK till Semester
     private Semester semester; // Koppling till termin
 
-public Long getUserId(){
+
+    public Long getUserId(){
     return user.getId();
 }
+
 }

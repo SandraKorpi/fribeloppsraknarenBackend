@@ -55,7 +55,7 @@ public class CalculationService {
             totalIncome += income + vacationPay;
         }
 
-        return totalIncome;
+        return Math.round(totalIncome);
     }
     public String compareSemesterIncome(long userId, int year, SemesterType semesterType) {
         // Hämta fribeloppet för terminen. Meddelande om att fribelopp ej finns om den är tom.
@@ -88,7 +88,7 @@ public class CalculationService {
         }
 
         // Beräkna hur många extra timmar användaren kan arbeta utan att överskrida fribeloppet
-        double additionalHours = difference / averageHourlyRate;
+        double additionalHours = Math.round(difference / averageHourlyRate);
         //Om allt stämmer får användaren information om sin inkomst jämfört emd fribeloppet.
         return String.format(
                 "Du kan tjäna %.2f kr mer denna termin utan att överskrida fribeloppet. Det motsvarar %.2f extra timmar, baserat på din medelinkomst/timme.",
@@ -126,7 +126,7 @@ public class CalculationService {
     {
         WorkedHours workedHours = workedHoursRepository.findByIdAndUser_Id(workedHoursId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inga arbetade timmar hittades med id: " + workedHoursId));
-        return workedHours.getHours() * workedHours.getHourlyRate();
+        return Math.round(workedHours.getHours() * workedHours.getHourlyRate());
     }
     @Transactional
     public double calculateMonthlyIncome(long userId, int year, int month) {
@@ -140,6 +140,6 @@ public class CalculationService {
             double vacationPay = (workedHours.getVacationPay() / 100) * hoursIncome; // Beräkna semesterersättning baserat på procenten
             totalIncome += hoursIncome + vacationPay; // Lägg till både timmar och semesterersättning
         }
-        return totalIncome;
+        return Math.round(totalIncome);
     }
 }
