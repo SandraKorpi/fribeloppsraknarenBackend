@@ -141,7 +141,7 @@ public class WorkedHoursController {
                                                           @PathVariable int year,
                                                           @PathVariable SemesterType semester) {
         Long userId = extractUserIdFromToken(token);
-        double income = calculationService.calculateSemesterIncome(userId, year, semester);
+        double income = calculationService.calculateSemesterIncomeWithVacationPay(userId, year, semester);
         return ResponseEntity.ok(income);
     }
 
