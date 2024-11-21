@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
+import sandrakorpi.csnfribeloppapi.Models.Semester;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -35,4 +37,5 @@ public interface WorkedHoursRepository extends JpaRepository<WorkedHours, Long> 
     @Query("DELETE FROM WorkedHours w WHERE w.month = :month")
     void deleteByMonth(@Param("month") int month);
 
+    List<WorkedHours> findAllByUser_IdAndSemester(Long user_id, Semester semester);
 }
