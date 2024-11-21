@@ -85,7 +85,7 @@ public class WorkedHoursController {
     }
 
     // Tar bort timmarna för ett specifikt datum i vald månad.
-    @DeleteMapping("/year/{year}/month/{month}/date/{date}")
+    @DeleteMapping("/delete/year/{year}/month/{month}/date/{date}")
     public ResponseEntity<Void> deleteByDate(@PathVariable int year, @PathVariable int month, @PathVariable int date, @Parameter(description = "Bearer token", required = true) @RequestHeader("Authorization") String token) {
         Long userId = extractUserIdFromToken(token);
         workedHoursService.deleteHoursByMonthDate(userId, year, month, date);
@@ -157,15 +157,18 @@ public class WorkedHoursController {
 //oanvändbar metod pga kan ej hämta workedhourid i frontend.....
     // Räknar ut vad användaren tjänat ett arbetspass.
     @GetMapping("/shift-income")
-    public ResponseEntity<Double> calculateShiftIncome(@RequestParam long userId, @RequestParam long workedHoursId) {
+    public ResponseEntity<Double> calculateShiftIncome(@RequestHeader("Authorization") String token, @RequestParam long workedHoursId) {
+        Long userId = extractUserIdFromToken(token);
         double income = calculationService.calculateShiftIncome(userId, workedHoursId);
         return ResponseEntity.ok(income);
     }
 
     // Jämför inkomsten med fribeloppet. VIKTIGASTE METODEN!
-    @GetMapping("/{userId}/compare-income")
-    public ResponseEntity<String> compareSemesterIncome(@PathVariable long userId, @RequestParam int year, @RequestParam SemesterType semesterType) {
-        double workedhours = workedHoursService.getWorkedHoursForYearSemester(userId, year, semesterType);
+    @GetMapping("/compare-income/{year}/{semesterType}")
+    public ResponseEntity<String> compareSemesterIncome(@RequestHeader("Authorization") String token,
+                                                        @PathVariable int year,
+                                                        @PathVariable SemesterType semesterType) {
+        Long userId = extractUserIdFromToken(token);
         String result = calculationService.compareSemesterIncome(userId, year, semesterType);
         return ResponseEntity.ok(result);
     }

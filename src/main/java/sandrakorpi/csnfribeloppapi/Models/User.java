@@ -34,11 +34,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String email;
 
-    @ElementCollection
-    private Map<String, Integer> totalHoursWorked; // Månad -> Timmar
+  //  @ElementCollection
+  //  private Map<String, Integer> totalHoursWorked; // Månad -> Timmar
 
-    @ElementCollection
-    private Map<String, Double> totalEarnings; // Månad -> Inkomster
+   // @ElementCollection
+    //private Map<String, Double> totalEarnings; // Månad -> Inkomster
 
     @ManyToOne
     @JoinColumn(name = "semester_id")

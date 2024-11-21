@@ -3,9 +3,11 @@ package sandrakorpi.csnfribeloppapi.Services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
 import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
 import sandrakorpi.csnfribeloppapi.Models.Semester;
+import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
 import sandrakorpi.csnfribeloppapi.Repositories.SemesterRepository;
 import sandrakorpi.csnfribeloppapi.Repositories.WorkedHoursRepository;
@@ -56,27 +58,44 @@ public class CalculationService {
         return totalIncome;
     }
     public String compareSemesterIncome(long userId, int year, SemesterType semesterType) {
-        // Hämta fribelopp för terminen
+        // Hämta fribeloppet för terminen. Meddelande om att fribelopp ej finns om den är tom.
         Semester semester = semesterRepository.findByTypeAndYear(semesterType, year);
+        if (semester == null) {
+            return "Fribeloppet för denna termin kunde inte hittas.";
+        }
         double incomeLimit = semester.getIncomeLimit();
 
-        // Beräkna total inkomst för terminen inklusive semesterersättning
+        // Beräknar totala inkomsten och jämför den med fribelopper.
         double totalIncome = calculateSemesterIncomeWithVacationPay(userId, year, semesterType);
         double difference = incomeLimit - totalIncome;
 
+        List <WorkedHours> workedHoursList = workedHoursRepository.findAllByUser_IdAndSemester(userId, semester);
+
+        // Kontrollerar att det finns registrerade timmar, annars står det:
+        if (workedHoursList.isEmpty()) {
+            return "Ingen arbetstid registrerad för denna termin.";
+        }
+
+        // Om inkomsten är lika med eller större än fribeloppet, informera användaren
         if (difference <= 0) {
             return "Du har nått eller överskridit fribeloppet för denna termin.";
         }
 
-        // Beräkna medeltimlön
+        // Beräkna medeltimlönen för användaren
         double averageHourlyRate = calculateAverageHourlyRate(userId, year, semesterType);
-        double additionalHours = difference / averageHourlyRate;
+        if (averageHourlyRate == 0) {
+            return "Medeltimlönen kunde inte beräknas, ingen arbetstid registrerad.";
+        }
 
+        // Beräkna hur många extra timmar användaren kan arbeta utan att överskrida fribeloppet
+        double additionalHours = difference / averageHourlyRate;
+        //Om allt stämmer får användaren information om sin inkomst jämfört emd fribeloppet.
         return String.format(
-                "Du kan tjäna %.2f kr mer denna termin utan att överskrida fribeloppet. Det motsvarar %.2f extra timmar, baserat på din medelinkomst/timme",
+                "Du kan tjäna %.2f kr mer denna termin utan att överskrida fribeloppet. Det motsvarar %.2f extra timmar, baserat på din medelinkomst/timme.",
                 difference, additionalHours
         );
     }
+
     public double calculateAverageHourlyRate(long userId, int year, SemesterType semesterType) {
         List<Integer> months = semesterService.getMonthsForSemesterType(semesterType);
         List<WorkedHours> workedHoursList = new ArrayList<>();
