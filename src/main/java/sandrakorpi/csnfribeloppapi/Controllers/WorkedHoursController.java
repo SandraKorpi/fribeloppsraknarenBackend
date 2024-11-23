@@ -122,6 +122,15 @@ public class WorkedHoursController {
         return ResponseEntity.ok(updatedWorkedHours);
     }
 
+    //Ska returnera sträng med delatjer kring arbetstimmarna.
+    @GetMapping("/worked-hours-details/{year}/{month}")
+    public ResponseEntity<String> getWorkedHoursDetails(@RequestHeader("Authorization") String token,
+                                                        @PathVariable int year,
+                                                        @PathVariable int month) {
+        Long userId = extractUserIdFromToken(token);
+        String workedHoursDetails = workedHoursService.getWorkedHoursDetailsByYearMonth(userId, year, month);
+        return ResponseEntity.ok(workedHoursDetails);
+    }
 
     // Räknar ut hur mycket en användare tjänat en månad.
     @GetMapping("/monthly-income/{year}/{month}")
@@ -132,7 +141,6 @@ public class WorkedHoursController {
         double income = calculationService.calculateMonthlyIncome(userId, year, month);
         return ResponseEntity.ok(income);
     }
-
 
 
     // Räknar ut vad användaren tjänat en termin.

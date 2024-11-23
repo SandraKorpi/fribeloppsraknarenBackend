@@ -125,7 +125,25 @@ public class WorkedHoursService {
 
         return calculateTotalHours(workedHoursList);
     }
+    public String getWorkedHoursDetailsByYearMonth(long userId, int year, int month) {
+        List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, month);
+        if (workedHoursList.isEmpty()) {
+            throw new ResourceNotFoundException("Inga arbetade timmar hittades för " + month);
+        }
 
+        StringBuilder details = new StringBuilder();
+        details.append("Detaljer för ").append(year).append("-").append(month).append(":\n");
+
+        for (WorkedHours workedHours : workedHoursList) {
+            details.append("Datum: ").append(workedHours.getDate())
+                    .append(", Timmar: ").append(workedHours.getHours())
+                    .append(", Timlön: ").append(workedHours.getHourlyRate())
+                    .append(", Semesterersättning: ").append(workedHours.getVacationPay())
+                    .append("\n");
+        }
+
+        return details.toString();
+    }
     public WorkedHoursDto convertToDto(WorkedHours workedHours){
         WorkedHoursDto workedHoursDto = new WorkedHoursDto();
         workedHoursDto.setUserId(workedHours.getUser().getId());
