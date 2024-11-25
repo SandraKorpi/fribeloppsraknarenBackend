@@ -65,6 +65,17 @@ public class UserService implements UserDetailsService {
         User userToUpdate = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
 
+        // Kontrollera om användarnamnet redan finns
+        if (userRepository.existsByUserName(updatedDto.getUserName()) && !userToUpdate.getUsername().equals(updatedDto.getUserName())) {
+            throw new RuntimeException("Användarnamnet är redan taget.");
+        }
+
+        // Kontrollera om e-postadressen redan finns
+        if (userRepository.existsByEmail(updatedDto.getEmail()) && !userToUpdate.getEmail().equals(updatedDto.getEmail())) {
+            throw new RuntimeException("E-postadressen är redan registrerad.");
+        }
+
+        // Uppdatera användarnamn, e-post och roller
         userToUpdate.setUserName(updatedDto.getUserName());
         userToUpdate.setEmail(updatedDto.getEmail());
         userToUpdate.setRoles(updatedDto.getRoles());
@@ -76,7 +87,8 @@ public class UserService implements UserDetailsService {
         }
 
         User savedUser = userRepository.save(userToUpdate);
-        //konvertera tillbaka till Dto.
+
+        // Konvertera tillbaka till UserDto och returnera
         return convertToUserDto(savedUser);
     }
 
