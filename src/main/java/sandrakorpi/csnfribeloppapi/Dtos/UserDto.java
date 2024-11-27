@@ -14,6 +14,6 @@ public class UserDto {
     private Long id;
     private String userName;
     private String email;
-    private String password;
+  //ska ej returnera nått lösenord  private String password;
     private List<Role> roles;
 }

@@ -1,14 +1,14 @@
 package sandrakorpi.csnfribeloppapi.Services;
 
-import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
 import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
-import sandrakorpi.csnfribeloppapi.Exceptions.UserAlreadyExistsException;
 import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Repositories.UserRepository;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,28 +17,18 @@ import java.util.List;
 
 @Service
 public class UserService implements UserDetailsService {
+
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
-
-    public UserService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
+    @Autowired
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    public User saveUser(UserDto userDto) {
-
-        if (userRepository.findByUserName(userDto.getUserName()) != null) {
-            throw new UserAlreadyExistsException("Användaren existerar redan");
+    public User saveUser(User user) {
+        if (userRepository.findByUserName(user.getUsername()) != null) {
+            throw new RuntimeException("Användaren existerar redan");
         }
-
-        User user = new User();
-
-        user.setUserName(userDto.getUserName());
-        user.setEmail(userDto.getEmail());
-
-        String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-        user.setPassword(encodedPassword);
 
         // Tilldela roller
         if (userRepository.count() == 0) {
@@ -49,21 +39,24 @@ public class UserService implements UserDetailsService {
 
         return userRepository.save(user);
     }
+    public void updatePassword(User user) {
+        // Uppdatera bara lösenordet för användaren
+        userRepository.save(user); // Endast lösenordet uppdateras här
+    }
 
     public List<UserDto> findAllUsers() {
-
         List<User> userList = userRepository.findAll();
         List<UserDto> userDtoList = new ArrayList<>();
 
-        //konvertera varje User till UserDto
+        // Konvertera varje User till UserDto
         for (User user : userList) {
             userDtoList.add(convertToUserDto(user));
         }
         return userDtoList;
     }
+
     public UserDto updateUser(Long userId, UserDto updatedDto) {
-        User userToUpdate = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
+        User userToUpdate = getUserEntityById(userId);
 
         // Kontrollera om användarnamnet redan finns
         if (userRepository.existsByUserName(updatedDto.getUserName()) && !userToUpdate.getUsername().equals(updatedDto.getUserName())) {
@@ -75,16 +68,10 @@ public class UserService implements UserDetailsService {
             throw new RuntimeException("E-postadressen är redan registrerad.");
         }
 
-        // Uppdatera användarnamn, e-post och roller
+        // Uppdatera användarnamn och e-post
         userToUpdate.setUserName(updatedDto.getUserName());
         userToUpdate.setEmail(updatedDto.getEmail());
         userToUpdate.setRoles(updatedDto.getRoles());
-
-        // Kolla om ett nytt lösenord har skickats med i DTO:n och kryptera det i så fall
-        if (updatedDto.getPassword() != null && !updatedDto.getPassword().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(updatedDto.getPassword());
-            userToUpdate.setPassword(encodedPassword);
-        }
 
         User savedUser = userRepository.save(userToUpdate);
 
@@ -92,48 +79,43 @@ public class UserService implements UserDetailsService {
         return convertToUserDto(savedUser);
     }
 
-
     public void deleteUser(long id) {
-
-        User userToDelete = getUserOrFail(id);
+        User userToDelete = getUserEntityById(id);
         userRepository.delete(userToDelete);
     }
 
-    public User convertToUser(UserDto userDto) {
-
-        User user = new User();
-        user.setId(userDto.getId());
-        user.setUserName(userDto.getUserName());
-        user.setEmail(userDto.getEmail());
-        user.setPassword(userDto.getPassword());
-        user.setRoles(userDto.getRoles());
-        return user;
-    }
-
-    public UserDto convertToUserDto (User user)
-    {
-        UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        userDto.setUserName(user.getUsername());
-        userDto.setEmail(user.getEmail());
-        userDto.setPassword(user.getPassword());
-        userDto.setRoles(user.getRoles());
-        return userDto;
-    }
-
-
-    public UserDto findById (long id){
-        User user = getUserOrFail(id);
-        return convertToUserDto(user);
-    }
+    // Metod för att hämta en användare baserat på ID
     public User getUserEntityById(long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Användare med ID " + id + " hittades inte"));
     }
 
-    public User getUserOrFail(long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Det finns ingen användare med id:  " + id));
+    // Metod för att konvertera UserDto till User
+    public User convertToUser(UserDto userDto) {
+        User user = new User();
+        user.setId(userDto.getId());
+        user.setUserName(userDto.getUserName());
+        user.setEmail(userDto.getEmail());
+        // Lösenordet hanteras inte i UserDto
+        user.setRoles(userDto.getRoles());
+        return user;
+    }
+
+    // Metod för att konvertera User till UserDto
+    public UserDto convertToUserDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUserName(user.getUsername());
+        userDto.setEmail(user.getEmail());
+        // Lösenordet sätts inte i DTO:n
+        userDto.setRoles(user.getRoles());
+        return userDto;
+    }
+
+    // Metod för att hämta användare med ID och returnera som DTO
+    public UserDto findById(long id) {
+        User user = getUserEntityById(id);
+        return convertToUserDto(user);
     }
 
     @Override
@@ -144,5 +126,5 @@ public class UserService implements UserDetailsService {
         }
         return user;
     }
-
 }
+

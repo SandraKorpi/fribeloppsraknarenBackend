@@ -34,12 +34,6 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String email;
 
-  //  @ElementCollection
-  //  private Map<String, Integer> totalHoursWorked; // Månad -> Timmar
-
-   // @ElementCollection
-    //private Map<String, Double> totalEarnings; // Månad -> Inkomster
-
     @ManyToOne
     @JoinColumn(name = "semester_id")
     private Semester semester; // Koppling till Terminen
@@ -85,6 +79,7 @@ public class User implements UserDetails {
     public String getPassword() {
         return password;
     }
+
 
     @Override
     public String getUsername() {
