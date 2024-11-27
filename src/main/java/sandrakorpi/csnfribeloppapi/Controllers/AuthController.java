@@ -1,5 +1,8 @@
 package sandrakorpi.csnfribeloppapi.Controllers;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import sandrakorpi.csnfribeloppapi.Dtos.ChangePasswordDto;
 import sandrakorpi.csnfribeloppapi.Dtos.LoginResponse;
 import sandrakorpi.csnfribeloppapi.Dtos.LoginUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.RegisterUserDto;
@@ -9,10 +12,6 @@ import sandrakorpi.csnfribeloppapi.Services.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,4 +69,14 @@ public class AuthController {
             return ResponseEntity.ok(loginResponse);
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }}}
+        }
+    }
+
+    //@AuthenticationPrincipal är en del av sring security och hämtar den auth-usern.
+    @PutMapping("/change-password")
+    public void changePassword(@RequestBody ChangePasswordDto changePasswordDto,
+                               @AuthenticationPrincipal User currentUser) {
+        authService.changePassword(changePasswordDto, currentUser);
+    }
+
+}
