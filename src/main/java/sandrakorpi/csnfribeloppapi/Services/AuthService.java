@@ -69,6 +69,8 @@ public class AuthService {
         userService.updatePassword(currentUser); // Spara användaren med det uppdaterade lösenordet
 
     }
+
+
 }
 
 
