@@ -7,6 +7,7 @@ import sandrakorpi.csnfribeloppapi.Dtos.LoginUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UpdateUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Models.User;
+import sandrakorpi.csnfribeloppapi.Repositories.UserRepository;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
 import sandrakorpi.csnfribeloppapi.Services.AuthService;
 import sandrakorpi.csnfribeloppapi.Services.UserService;
@@ -26,11 +27,12 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    private final AuthService authService;
-    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, JwtTokenProvider jwtTokenProvider1, AuthService authService) {
+    private final UserRepository userRepository;
+
+    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, JwtTokenProvider jwtTokenProvider1, AuthService authService, UserRepository userRepository) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider1;
-        this.authService = authService;
+        this.userRepository = userRepository;
     }
 
     //endast admin ska kunna få utalla users.
@@ -54,38 +56,38 @@ public class UserController {
     //Dessa två metoder ska usern själv kunna komma åt, så de ska hämta id från token och inte anges.
     @PutMapping("/{id}")
     public ResponseEntity<LoginResponse> updateUser(
-            @RequestHeader("Authorization") String token, // Token från klienten
-            @RequestBody UpdateUserDto updateUserDto, // DTO med de uppdaterade uppgifterna
-            @PathVariable Long id) { // ID för användaren som ska uppdateras
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserDto updateUserDto,
+            @PathVariable Long id) {
 
         try {
-            // 1. Extrahera userId från token
+            // Extrahera userId från token
             Long userId = extractUserIdFromToken(token);
 
-            // 2. Kontrollera att användaren endast kan uppdatera sitt eget konto
+            // Kontrollera att användaren endast kan uppdatera sitt eget konto
             if (!userId.equals(id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
-            // 3. Anropa UserService för att uppdatera användaren baserat på DTO
-            UpdateUserDto updatedUserDto = userService.updateUser(userId, updateUserDto);
+            // Uppdatera användaren
+            User updatedUser = userService.updateUserEntity(userId, updateUserDto);
 
-            // 4. Skapa nya extra claims för token
-            Map<String, Object> extraClaims = Map.of("userId", userId);
+            // Skapa extra claims för den nya tokenen
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", updatedUser.getId()); // Lägg till userId i claims
 
-            // 5. Generera en ny JWT-token baserat på de uppdaterade uppgifterna
-            String newToken = jwtTokenProvider.generateToken(extraClaims, (UserDetails) updatedUserDto);
+            // Generera ny JWT-token baserad på den uppdaterade användaren
+            String newToken = jwtTokenProvider.generateToken(extraClaims, updatedUser);
 
-            // 6. Bygg LoginResponse med den nya tokenen
+            // Skapa LoginResponse med ny token och expiration time
             LoginResponse loginResponse = LoginResponse.builder()
                     .token(newToken)
                     .expiresIn(jwtTokenProvider.getExpirationTime())
                     .build();
 
-            // 7. Returnera den nya tokenen och uppdaterade data
             return ResponseEntity.ok(loginResponse);
-
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
