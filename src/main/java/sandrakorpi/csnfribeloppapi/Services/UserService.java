@@ -3,6 +3,7 @@ package sandrakorpi.csnfribeloppapi.Services;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import sandrakorpi.csnfribeloppapi.Dtos.UpdateUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
 import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
@@ -55,29 +56,48 @@ public class UserService implements UserDetailsService {
         return userDtoList;
     }
 
-    public UserDto updateUser(Long userId, UserDto updatedDto) {
+    public UpdateUserDto updateUser(Long userId, UpdateUserDto updateDto) {
         User userToUpdate = getUserEntityById(userId);
 
         // Kontrollera om användarnamnet redan finns
-        if (userRepository.existsByUserName(updatedDto.getUserName()) && !userToUpdate.getUsername().equals(updatedDto.getUserName())) {
+        if (updateDto.getUserName() != null
+                && !updateDto.getUserName().equals(userToUpdate.getUsername())
+                && userRepository.existsByUserName(updateDto.getUserName())) {
             throw new RuntimeException("Användarnamnet är redan taget.");
         }
 
         // Kontrollera om e-postadressen redan finns
-        if (userRepository.existsByEmail(updatedDto.getEmail()) && !userToUpdate.getEmail().equals(updatedDto.getEmail())) {
+        if (updateDto.getEmail() != null
+                && !updateDto.getEmail().equals(userToUpdate.getEmail())
+                && userRepository.existsByEmail(updateDto.getEmail())) {
             throw new RuntimeException("E-postadressen är redan registrerad.");
         }
 
-        // Uppdatera användarnamn och e-post
-        userToUpdate.setUserName(updatedDto.getUserName());
-        userToUpdate.setEmail(updatedDto.getEmail());
-        userToUpdate.setRoles(updatedDto.getRoles());
+        // Uppdatera endast namn och e-post
+        if (updateDto.getUserName() != null) {
+            userToUpdate.setUserName(updateDto.getUserName());
+        }
 
+        if (updateDto.getEmail() != null) {
+            userToUpdate.setEmail(updateDto.getEmail());
+        }
+
+        // Spara ändringar
         User savedUser = userRepository.save(userToUpdate);
 
         // Konvertera tillbaka till UserDto och returnera
-        return convertToUserDto(savedUser);
+        return convertToUpdateUserDto(savedUser);
     }
+
+    //metod som konverterar user till updateuserdto
+    public UpdateUserDto convertToUpdateUserDto(User user)
+    {
+        UpdateUserDto updateUserDto = new UpdateUserDto();
+        updateUserDto.setEmail(user.getEmail());
+        updateUserDto.setUserName(user.getUsername());
+        return updateUserDto;
+    }
+
 
     public void deleteUser(long id) {
         User userToDelete = getUserEntityById(id);

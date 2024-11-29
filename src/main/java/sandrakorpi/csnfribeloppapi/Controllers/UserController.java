@@ -1,5 +1,6 @@
 package sandrakorpi.csnfribeloppapi.Controllers;
 
+import sandrakorpi.csnfribeloppapi.Dtos.UpdateUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
 import sandrakorpi.csnfribeloppapi.Services.UserService;
@@ -41,13 +42,13 @@ public class UserController {
     }
 
     //Dessa två metoder ska usern själv kunna komma åt, så de ska hämta id från token och inte anges.
-    @PutMapping({"/{id}"})
-    public ResponseEntity<UserDto> updateUser (@RequestHeader("Authorization") String token, @RequestBody UserDto userDto)
-    {
+    @PutMapping("/{id}")
+    public ResponseEntity<UpdateUserDto> updateUser(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserDto updateUserDto, @PathVariable String id) {
         Long userId = extractUserIdFromToken(token);
-        UserDto updatedUserDto = userService.updateUser(userId, userDto);
+        UpdateUserDto updatedUserDto = userService.updateUser(userId, updateUserDto);
         return ResponseEntity.ok(updatedUserDto);
-
     }
 
     //Metod så admin kan söka efter user med id.
