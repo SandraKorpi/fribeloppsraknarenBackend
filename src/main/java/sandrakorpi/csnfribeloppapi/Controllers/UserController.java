@@ -54,6 +54,7 @@ public class UserController {
     }
 
     //Dessa två metoder ska usern själv kunna komma åt, så de ska hämta id från token och inte anges.
+    //Behöver sätta en ny token här om användaren uppdaterar sitt användarnamn då token hänger ihop med namnet.
     @PutMapping("/{id}")
     public ResponseEntity<LoginResponse> updateUser(
             @RequestHeader("Authorization") String token,

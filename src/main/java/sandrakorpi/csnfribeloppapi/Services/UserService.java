@@ -59,28 +59,31 @@ public class UserService implements UserDetailsService {
     public User updateUserEntity(Long userId, UpdateUserDto updateDto) {
         User userToUpdate = getUserEntityById(userId);
 
+        // Validera endast om användarnamnet har ändrats och tillhör en annan användare
         if (updateDto.getUserName() != null
                 && !updateDto.getUserName().equals(userToUpdate.getUsername())
                 && userRepository.existsByUserName(updateDto.getUserName())) {
             throw new RuntimeException("Användarnamnet är redan taget.");
         }
 
+        // Validera endast om e-postadressen har ändrats och tillhör en annan användare
         if (updateDto.getEmail() != null
                 && !updateDto.getEmail().equals(userToUpdate.getEmail())
                 && userRepository.existsByEmail(updateDto.getEmail())) {
             throw new RuntimeException("E-postadressen är redan registrerad.");
         }
 
+        // Uppdatera endast om det finns nya värden
         if (updateDto.getUserName() != null) {
             userToUpdate.setUserName(updateDto.getUserName());
         }
-
         if (updateDto.getEmail() != null) {
             userToUpdate.setEmail(updateDto.getEmail());
         }
 
-        return userRepository.save(userToUpdate); // Returnera uppdaterad användare
+        return userRepository.save(userToUpdate);
     }
+
 
 
     //metod som konverterar user till updateuserdto
