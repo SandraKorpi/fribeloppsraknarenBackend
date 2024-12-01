@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import sandrakorpi.csnfribeloppapi.Dtos.SemesterDto;
+import sandrakorpi.csnfribeloppapi.Models.Semester;
 import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Services.SemesterService;
 
@@ -46,6 +47,15 @@ public class SemesterController {
     {
        List<SemesterDto> semesterDtoList = semesterService.findAll();
        return ResponseEntity.ok(semesterDtoList);
+    }
+    @GetMapping("/{month}/{year}")
+    public ResponseEntity<SemesterDto> getSemesterDetails(@PathVariable int month, @PathVariable int year) {
+        // Hämta semester baserat på månad och år
+        Semester semester = semesterService.getSemesterForMonthAndYear(month, year);
+
+        // Konvertera semester till SemesterDto och returnera
+        SemesterDto semesterDto = semesterService.convertToDto(semester);
+        return ResponseEntity.ok(semesterDto);
     }
 
     @GetMapping("/{id}")

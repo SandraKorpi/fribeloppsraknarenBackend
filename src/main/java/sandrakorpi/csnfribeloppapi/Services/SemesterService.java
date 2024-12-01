@@ -1,5 +1,6 @@
 package sandrakorpi.csnfribeloppapi.Services;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import sandrakorpi.csnfribeloppapi.Dtos.SemesterDto;
 import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
