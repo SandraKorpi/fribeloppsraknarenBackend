@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
 
+    permissions:
+      id-token: write  # Lägg till denna rad för att ge skrivrättigheter till id-token
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -41,9 +44,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}  # Det specifika klient-ID:t
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}  # Det specifika Tenant-ID:t
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}  # Det specifika Subscription-ID:t
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
