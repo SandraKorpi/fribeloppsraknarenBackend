@@ -22,9 +22,6 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: List files in target/ directory (for debugging)
-        run: ls -al target/
-
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -34,11 +31,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write
 
     steps:
       - name: Download artifact from build job
@@ -58,5 +50,5 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'fribeloppsraknaren'
-          slot-name: 'Production'
-          package: 'CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'
+          package: ${{ github.workspace }}/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
+
