@@ -49,7 +49,7 @@ jobs:
           auth-type: SERVICE_PRINCIPAL  # Använder SERVICE_PRINCIPAL för autentisering
           enable-AzPSSession: false
           environment: azurecloud
-          allow-no-subscriptions: false
+          allow-no-subscriptions: true  # Detta tvingar den att inte blockeras om inga prenumerationer finns
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
