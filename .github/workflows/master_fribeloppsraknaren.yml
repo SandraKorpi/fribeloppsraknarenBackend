@@ -25,6 +25,7 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
+          name: java-app  # Här definieras namnet på artefakten
           path: '${{ github.workspace }}/target/*.war'
 
   deploy:
@@ -40,7 +41,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: java-app
+          name: java-app  # Här används samma namn som vid uppladdning
 
       - name: Login to Azure
         uses: azure/login@v2
