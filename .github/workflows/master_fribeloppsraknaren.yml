@@ -41,9 +41,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}  # Det specifika klient-ID:t
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}  # Det specifika Tenant-ID:t
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}  # Det specifika Subscription-ID:t
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -51,4 +51,3 @@ jobs:
         with:
           app-name: 'fribeloppsraknaren'
           package: ${{ github.workspace }}/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
-
