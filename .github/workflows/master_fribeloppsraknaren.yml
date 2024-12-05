@@ -25,11 +25,7 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # Steg 4: Lista innehållet i target-mappen för verifiering
-      - name: List target directory
-        run: ls -l target
-
-      # Steg 5: Ladda upp artifact för deployment job
+      # Steg 4: Ladda upp artifact för deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -39,6 +35,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      id-token: write  # Lägg till denna rad för att ge rätt behörighet till ID-token
 
     steps:
       # Steg 1: Ladda ner artifact från build job
@@ -47,27 +45,24 @@ jobs:
         with:
           name: CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
 
-      # Steg 2: Lista innehållet i arbetskatalogen för verifiering
-      - name: List workspace directory
-        run: ls -l ${{ github.workspace }}
-
-      # Steg 3: Logga in på Azure med Service Principal
+      # Steg 2: Logga in på Azure med Service Principal
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
-          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENT_SECRET }}
-          auth-type: SERVICE_PRINCIPAL
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}  # Din client-id
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}  # Din tenant-id
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}  # Din subscription-id
+          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENT_SECRET }}  # Din client secret
+          auth-type: SERVICE_PRINCIPAL  # Använder SERVICE_PRINCIPAL för autentisering
           enable-AzPSSession: false
-          environment: azurecloud
-          allow-no-subscriptions: true
+          environment: azurecloud  # Standard Azure environment
+          allow-no-subscriptions: true  # Tvingar den att inte blockeras om inga prenumerationer finns
 
-      # Steg 4: Deploya till Azure Web App
+      # Steg 3: Deploya till Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fribeloppsraknaren'
-          package: ${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
+          app-name: 'fribeloppsraknaren'  # Namnet på din Azure Web App
+          package: ${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar  # Justera vägen om det behövs
+
