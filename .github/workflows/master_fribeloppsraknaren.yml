@@ -1,4 +1,4 @@
-name: Build and deploy WAR app to Azure Web App - fribeloppsraknaren
+name: Build and deploy JAR app to Azure Web App - fribeloppsraknaren
 
 on:
   push:
@@ -20,13 +20,13 @@ jobs:
           distribution: 'zulu'  # Använd zulu istället för openjdk eller adoptopenjdk
 
       - name: Build with Maven
-        run: mvn clean install -DskipTests
+        run: mvn clean install -DskipTests  # Bygg projektet med Maven
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: java-app  # Här definieras namnet på artefakten
-          path: '${{ github.workspace }}/target/*.war'
+          name: java-app
+          path: '${{ github.workspace }}/target/*.jar'  # Uppdaterad till .jar
 
   deploy:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: java-app  # Här används samma namn som vid uppladdning
+          name: java-app  # Ladda ner artefakten från build-steget
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -56,4 +56,4 @@ jobs:
         with:
           app-name: 'fribeloppsraknaren'
           slot-name: 'Production'
-          package: '*.war'
+          package: '*.jar'  # Uppdaterad för att använda .jar-filen
