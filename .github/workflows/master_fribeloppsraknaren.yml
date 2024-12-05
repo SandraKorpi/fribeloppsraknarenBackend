@@ -1,4 +1,4 @@
-name: Build and deploy JAR app to Azure Web App - fribeloppsraknaren
+name: Build and deploy JAR app to Azure Web App
 
 on:
   push:
@@ -11,49 +11,65 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Steg 1: Checkout koden från GitHub repositoryt
       - uses: actions/checkout@v4
 
+      # Steg 2: Ställ in Java-version
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: '21'  # Specificera versionen som '21'
-          distribution: 'zulu'  # Använd zulu istället för openjdk eller adoptopenjdk
+          java-version: '21'
+          distribution: 'zulu'
 
+      # Steg 3: Bygg appen med Maven
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      # Steg 4: Skapa en ZIP-fil av JAR-filen
+      - name: Create ZIP package
+        run: |
+          mkdir -p deployment
+          cp target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar deployment/
+          cd deployment
+          zip -r CSNfribeloppAPI-0.0.1-SNAPSHOT.zip CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
+
+      # Steg 5: Ladda upp artifact för deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
-          path: '${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'
+          name: CSNfribeloppAPI-0.0.1-SNAPSHOT.zip
+          path: deployment/CSNfribeloppAPI-0.0.1-SNAPSHOT.zip
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # This is required for requesting the JWT
+      id-token: write  # Behörighet för ID-token
 
     steps:
+      # Steg 1: Ladda ner artifact från build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
+          name: CSNfribeloppAPI-0.0.1-SNAPSHOT.zip
 
+      # Steg 2: Logga in på Azure med Service Principal
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}  # Din client-id
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}  # Din tenant-id
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}  # Din subscription-id
+          client-secret: ${{ secrets.AZUREAPPSERVICE_CLIENT_SECRET }}  # Din client secret
+          auth-type: SERVICE_PRINCIPAL  # Använder SERVICE_PRINCIPAL för autentisering
+          enable-AzPSSession: false
+          environment: azurecloud  # Standard Azure environment
+          allow-no-subscriptions: true  # Tvingar den att inte blockeras om inga prenumerationer finns
 
+      # Steg 3: Deploya ZIP-paketet till Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'fribeloppsraknaren'
-          slot-name: 'Production'
-          package: '*.jar'
+          app-name: 'fribeloppsraknaren'  # Namnet på din Azure Web App
+          package: CSNfribeloppAPI-0.0.1-SNAPSHOT.zip
