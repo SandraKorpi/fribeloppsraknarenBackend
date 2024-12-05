@@ -40,10 +40,6 @@ public class JwtTokenProvider {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        // Generera token utan extra claims
-        return generateToken(new HashMap<>(), userDetails);
-    }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         // Kontrollera om userDetails är av typen User
@@ -58,13 +54,6 @@ public class JwtTokenProvider {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
-  /*  public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
-    }
-
-    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
-        return buildToken(extraClaims, userDetails, jwtExpiration);
-    } */
 
     public long getExpirationTime() {
         return jwtExpiration;

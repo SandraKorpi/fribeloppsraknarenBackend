@@ -137,8 +137,8 @@ public class CalculationService {
         double totalIncome = 0.0;
         for (WorkedHours workedHours : workedHoursList) {
             double hoursIncome = workedHours.getHours() * workedHours.getHourlyRate();
-            double vacationPay = (workedHours.getVacationPay() / 100) * hoursIncome; // Beräkna semesterersättning baserat på procenten
-            totalIncome += hoursIncome + vacationPay; // Lägg till både timmar och semesterersättning
+            double vacationPay = (workedHours.getVacationPay() / 100) * hoursIncome;
+            totalIncome += hoursIncome + vacationPay;
         }
         return Math.round(totalIncome);
     }

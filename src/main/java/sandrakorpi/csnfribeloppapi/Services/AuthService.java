@@ -51,13 +51,13 @@ public class AuthService {
     }
 
     public void changePassword(ChangePasswordDto changePasswordDto, User currentUser) {
-        // Kontrollera om det nuvarande lösenordet stämmer
+        // Kontrollera om det nuvarande lösenordet stämmer.
         if (!passwordEncoder.matches(changePasswordDto.getCurrentPassword(), currentUser.getPassword())) {
             throw new IllegalArgumentException("Nuvarande lösenord är felaktigt");
 
         }
 
-        // Kontrollera om de nya lösenorden matchar
+        // Kontrollera om de nya lösenorden matchar.
         if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
             throw new IllegalArgumentException("De nya lösenorden matchar inte");
         }
@@ -65,8 +65,8 @@ public class AuthService {
         // Kryptera det nya lösenordet
         currentUser.setPassword(passwordEncoder.encode(changePasswordDto.getNewPassword()));
 
-        // Spara användaren med det nya lösenordet
-        userService.updatePassword(currentUser); // Spara användaren med det uppdaterade lösenordet
+        // Spara användaren med det nya lösenordet.
+        userService.updatePassword(currentUser);
 
     }
 

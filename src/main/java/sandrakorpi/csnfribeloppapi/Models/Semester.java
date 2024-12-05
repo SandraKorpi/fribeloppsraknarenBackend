@@ -20,7 +20,6 @@ public class Semester {
     private int year;
     @Enumerated(EnumType.STRING)
     private SemesterType type; // HT eller VT
-    @OneToMany(mappedBy = "semester")
-    private List<User> users; // Koppling till användare
+
 
 }
