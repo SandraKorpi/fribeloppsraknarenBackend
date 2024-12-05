@@ -20,13 +20,12 @@ jobs:
           distribution: 'zulu'  # Använd zulu istället för openjdk eller adoptopenjdk
 
       - name: Build with Maven
-        run: mvn clean install -DskipTests  # Bygg projektet med Maven
+        run: mvn clean package -DskipTests  # Bygger JAR-filen istället för WAR
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: java-app
-          path: '${{ github.workspace }}/target/*.jar'  # Uppdaterad till .jar
+          path: '${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'  # Uppdatera med rätt JAR-fil
 
   deploy:
     runs-on: ubuntu-latest
@@ -41,7 +40,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: java-app  # Ladda ner artefakten från build-steget
+          name: CSNfribeloppAPI-0.0.1-SNAPSHOT.jar  # Ladda ner rätt artefakt
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -56,4 +55,4 @@ jobs:
         with:
           app-name: 'fribeloppsraknaren'
           slot-name: 'Production'
-          package: '*.jar'  # Uppdaterad för att använda .jar-filen
+          package: '/home/site/wwwroot/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'  # Uppdatera till JAR-filen för att starta applikationen
