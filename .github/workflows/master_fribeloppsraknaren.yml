@@ -46,6 +46,9 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
+          auth-type: OIDC
+          federated-identity: true
+          audience: api://AzureADTokenExchange
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
