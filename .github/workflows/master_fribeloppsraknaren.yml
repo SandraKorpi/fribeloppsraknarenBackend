@@ -46,8 +46,7 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
-          auth-type: OIDC  # Autentisering via OIDC (OpenID Connect)
-          audience: api://AzureADTokenExchange
+          auth-type: SERVICE_PRINCIPAL  # Använder SERVICE_PRINCIPAL för autentisering
           enable-AzPSSession: false
           environment: azurecloud
           allow-no-subscriptions: false
@@ -58,4 +57,3 @@ jobs:
         with:
           app-name: 'fribeloppsraknaren'  # Namnet på din Azure Web App
           package: ${{ github.workspace }}/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
-
