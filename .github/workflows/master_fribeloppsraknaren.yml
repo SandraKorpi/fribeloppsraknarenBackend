@@ -16,8 +16,8 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: '21'  # Ändra till '21' istället för 'java21'
-          distribution: 'adoptopenjdk'  # Ändra distribution till 'adoptopenjdk' om 'microsoft' inte fungerar
+          java-version: '21'  # Specificera versionen som '21'
+          distribution: 'openjdk'  # Använd openjdk istället för adoptopenjdk eller microsoft
 
       - name: Build with Maven
         run: mvn clean install
@@ -56,3 +56,4 @@ jobs:
           app-name: 'fribeloppsraknaren'
           slot-name: 'Production'
           package: '*.war'
+
