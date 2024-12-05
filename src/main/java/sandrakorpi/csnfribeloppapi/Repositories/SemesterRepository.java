@@ -14,6 +14,5 @@ public interface SemesterRepository extends JpaRepository<Semester, Long> {
     Semester findByTypeAndYear(SemesterType semesterType, int year);
 
 
-
     Optional<Semester> findByYearAndType(int year, SemesterType type);
 }

@@ -7,6 +7,7 @@ import sandrakorpi.csnfribeloppapi.Dtos.UpdateUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
 import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
+import sandrakorpi.csnfribeloppapi.Exceptions.UserAlreadyExistsException;
 import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class UserService implements UserDetailsService {
 
     public User saveUser(User user) {
         if (userRepository.findByUserName(user.getUsername()) != null) {
-            throw new RuntimeException("Användaren existerar redan");
+            throw new UserAlreadyExistsException("Användaren existerar redan");
         }
 
         // Tilldela roller
