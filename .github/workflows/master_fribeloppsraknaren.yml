@@ -28,7 +28,7 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: java-app
+          java-version: '21.0.4'
           path: '${{ github.workspace }}/target/*.war'
 
   deploy:
