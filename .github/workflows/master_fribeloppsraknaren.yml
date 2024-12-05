@@ -1,4 +1,4 @@
-name: Build and deploy JAR app to Azure Web App - fribeloppsraknaren
+name: Build and deploy JAR app to Azure Web App
 
 on:
   push:
@@ -16,17 +16,20 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: '21'  # Specificera versionen som '21'
-          distribution: 'zulu'  # Använd zulu istället för openjdk eller adoptopenjdk
+          java-version: '21'
+          distribution: 'zulu'
 
       - name: Build with Maven
         run: mvn clean package -DskipTests
+
+      - name: List files in target/ directory (for debugging)
+        run: ls -al target/
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
-          path: '${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'
+          path: target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
 
   deploy:
     runs-on: ubuntu-latest
@@ -35,7 +38,7 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # This is required for requesting the JWT
+      id-token: write
 
     steps:
       - name: Download artifact from build job
@@ -46,9 +49,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A7A53051EBF34F70BDACE03CC158FF58 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2DF0386EDE9847EAA7C904279AB6EE40 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CF79E5FDA4A643C9B9323BA759329FF3 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -56,4 +59,4 @@ jobs:
         with:
           app-name: 'fribeloppsraknaren'
           slot-name: 'Production'
-          package: '*.jar'
+          package: 'CSNfribeloppAPI-0.0.1-SNAPSHOT.jar'
