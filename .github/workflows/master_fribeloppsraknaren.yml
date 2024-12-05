@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy WAR app to Azure Web App - fribeloppsraknaren
 
 on:
@@ -19,8 +16,8 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: 'java21'
-          distribution: 'microsoft'
+          java-version: '21'  # Ändra till '21' istället för 'java21'
+          distribution: 'adoptopenjdk'  # Ändra distribution till 'adoptopenjdk' om 'microsoft' inte fungerar
 
       - name: Build with Maven
         run: mvn clean install
@@ -28,7 +25,6 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          java-version: '21.0.4'
           path: '${{ github.workspace }}/target/*.war'
 
   deploy:
@@ -38,14 +34,14 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: java-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -60,4 +56,3 @@ jobs:
           app-name: 'fribeloppsraknaren'
           slot-name: 'Production'
           package: '*.war'
-          
