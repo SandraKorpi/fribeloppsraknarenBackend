@@ -64,4 +64,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'fribeloppsraknaren'  # Namnet på din Azure Web App
-          package: ${{ github.workspace }}/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar
+          package: ${{ github.workspace }}/target/CSNfribeloppAPI-0.0.1-SNAPSHOT.jar  # Justera vägen om det behövs
