@@ -67,7 +67,7 @@ class CalculationServiceTest {
     assertEquals(expected, result, 0.01); // Tillåter en liten avvikelse (0.01) för decimalprecision
 }
 
-    @Test
+   /* @Test
     void compareSemesterIncome() {
     }
 
@@ -85,5 +85,5 @@ class CalculationServiceTest {
 
     @Test
     void calculateMonthlyIncome() {
-    }
+    } */
 }
