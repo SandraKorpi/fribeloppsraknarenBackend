@@ -85,7 +85,7 @@ public class SecurityConfig {
         // Ange tillåtna HTTP-metoder
         configuration.setAllowedMethods(List.of(POST.name(), GET.name(), PUT.name(), DELETE.name(), PATCH.name(), OPTIONS.name()));
         // Lägg till varje origin som en enskild sträng i listan
-        configuration.setAllowedOrigins(List.of("http://localhost:3004", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3004", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:3000", "https://fribeloppsraknaren.eu-north-1.elasticbeanstalk.com"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
