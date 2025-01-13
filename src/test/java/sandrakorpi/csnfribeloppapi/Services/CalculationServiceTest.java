@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class CalculationServiceTest {
     @Mock
@@ -67,9 +67,42 @@ class CalculationServiceTest {
     assertEquals(expected, result, 0.01); // Tillåter en liten avvikelse (0.01) för decimalprecision
 }
 
-   /* @Test
-    void compareSemesterIncome() {
+@Test
+    void compareSemesterIncomeWithSemesterPay() {
+        //anger användaren, år och vilken temin som ska jämföras med.
+    long userId = 1L;
+    int year = 2024;
+    SemesterType semesterType = SemesterType.VT;
+    WorkedHours workedHours1 = new WorkedHours();
+    workedHours1.setHours(40);
+    workedHours1.setHourlyRate(200);
+    workedHours1.setVacationPay(12);
+    // 40 timmar, 200 SEK/timme, 12% semesterersättning
+    WorkedHours workedHours2 = new WorkedHours();
+    workedHours2.setHours(20);
+    workedHours2.setHourlyRate(150);
+    workedHours2.setVacationPay(10);
+    // 20 timmar, 150 SEK/timme, 10% semesterersättning
+
+    List<Integer> months = Arrays.asList(1, 2, 3); // Exempel på månader
+    when(semesterService.getMonthsForSemesterType(semesterType)).thenReturn(months);
+
+    when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 1)).thenReturn(Arrays.asList(workedHours1));
+    when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 2)).thenReturn(Arrays.asList(workedHours2));
+    when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 3)).thenReturn(Arrays.asList());
+
+    double result = calculationService.calculateSemesterIncomeWithVacationPay(userId, year, semesterType);
+    // Assert
+    double expectedIncome = Math.round(
+            (40 * 200 + (40 * 200 * 0.12)) +
+                    (20 * 150 + (20 * 150 * 0.10))
+    );
+    assertEquals(expectedIncome, result);
+    verify(semesterService).getMonthsForSemesterType(semesterType);
+    verify(workedHoursRepository, times(3)).findByUser_IdAndYearAndMonth(eq(userId), eq(year), anyInt());
     }
+
+    /*
 
     @Test
     void calculateAverageHourlyRate() {
