@@ -96,7 +96,7 @@ public class CalculationService {
         );
     }
 
-    public double calculateAverageHourlyRate(long userId, int year, SemesterType semesterType) {
+   /* public double calculateAverageHourlyRate(long userId, int year, SemesterType semesterType) {
         List<Integer> months = semesterService.getMonthsForSemesterType(semesterType);
         List<WorkedHours> workedHoursList = new ArrayList<>();
 
@@ -114,19 +114,43 @@ public class CalculationService {
         }
 
         return count > 0 ? totalHourlyRate / count : 0.0;
-    }
+    } */
+   public double calculateAverageHourlyRate(long userId, int year, SemesterType semesterType) {
+       List<Integer> months = semesterService.getMonthsForSemesterType(semesterType);
+       List<WorkedHours> workedHoursList = new ArrayList<>();
+
+       // Hämta alla arbetstimmar för den terminen
+       for (Integer month : months) {
+           workedHoursList.addAll(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, month));
+       }
+
+       // Beräkna den totala lönen och de totala arbetade timmarna
+       double totalIncome = 0.0;
+       double totalHours = 0.0;
+
+       for (WorkedHours workedHours : workedHoursList) {
+           double hourlyRateWithVacation = workedHours.getHourlyRate() * (1 + workedHours.getVacationPay() / 100.0); // Ta hänsyn till semesterersättning
+           totalIncome += workedHours.getHours() * hourlyRateWithVacation; // Lön för arbetade timmar inklusive semesterersättning
+           totalHours += workedHours.getHours(); // Totalt antal arbetade timmar
+       }
+
+       // Beräkna snitttimlön
+       return totalHours > 0 ? totalIncome / totalHours : 0.0;
+   }
+
     @Transactional
     public double calculateYearlyIncome(long userId, int year) {
         List<WorkedHours> workedHoursList = workedHoursRepository.findByUser_IdAndYear(userId, year);
         return calculateIncome(workedHoursList);
     }
 
+    //behöver inkludera semesterersättning i test och metod
     @Transactional
     public double calculateShiftIncome (long userId, long workedHoursId)
     {
         WorkedHours workedHours = workedHoursRepository.findByIdAndUser_Id(workedHoursId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Inga arbetade timmar hittades med id: " + workedHoursId));
-        return Math.round(workedHours.getHours() * workedHours.getHourlyRate());
+        return workedHours.getHours() * workedHours.getHourlyRate();
     }
     @Transactional
     public double calculateMonthlyIncome(long userId, int year, int month) {
@@ -140,6 +164,6 @@ public class CalculationService {
             double vacationPay = (workedHours.getVacationPay() / 100) * hoursIncome;
             totalIncome += hoursIncome + vacationPay;
         }
-        return Math.round(totalIncome);
+        return totalIncome;
     }
 }
