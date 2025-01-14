@@ -11,10 +11,7 @@ import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
 import sandrakorpi.csnfribeloppapi.Repositories.SemesterRepository;
 import sandrakorpi.csnfribeloppapi.Repositories.WorkedHoursRepository;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -102,20 +99,80 @@ class CalculationServiceTest {
     verify(workedHoursRepository, times(3)).findByUser_IdAndYearAndMonth(eq(userId), eq(year), anyInt());
     }
 
-    /*
 
     @Test
     void calculateAverageHourlyRate() {
+        //anger användaren, år och vilken temin som ska jämföras med.
+        long userId = 1L;
+        int year = 2024;
+        SemesterType semesterType = SemesterType.VT;
+        WorkedHours workedHours1 = new WorkedHours();
+        workedHours1.setHours(40);
+        workedHours1.setHourlyRate(200);
+        workedHours1.setVacationPay(12);
+        // 40 timmar, 200 SEK/timme, 12% semesterersättning
+        WorkedHours workedHours2 = new WorkedHours();
+        workedHours2.setHours(20);
+        workedHours2.setHourlyRate(150);
+        workedHours2.setVacationPay(10);
+        // 20 timmar, 150 SEK/timme, 10% semesterersättning
+
+        List<Integer> months = Arrays.asList(1, 2, 3); // Exempel på månader
+        when(semesterService.getMonthsForSemesterType(semesterType)).thenReturn(months);
+
+        when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 1)).thenReturn(Arrays.asList(workedHours1));
+        when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 2)).thenReturn(Arrays.asList(workedHours2));
+        when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, year, 3)).thenReturn(Arrays.asList());
+
+        double result = calculationService.calculateAverageHourlyRate(userId, year, semesterType);
+        assertEquals(result, 204.33, 0.01);
+        verify(semesterService).getMonthsForSemesterType(semesterType);
+        verify(workedHoursRepository, times(3)).findByUser_IdAndYearAndMonth(eq(userId), eq(year), anyInt());
     }
+
+    /*
 
     @Test
     void calculateYearlyIncome() {
     }
 
+       @Transactional
+    public double calculateShiftIncome (long userId, long workedHoursId)
+    {
+        WorkedHours workedHours = workedHoursRepository.findByIdAndUser_Id(workedHoursId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Inga arbetade timmar hittades med id: " + workedHoursId));
+        return Math.round(workedHours.getHours() * workedHours.getHourlyRate());
+*/
+
+    //behöver inkludera semesterersättning i test och metod
     @Test
     void calculateShiftIncome() {
-    }
+        //anger användaren, år och vilken temin som ska jämföras med.
+        long userId = 1L;
+        WorkedHours workedHours1 = new WorkedHours();
+        workedHours1.setId(1L);
+        workedHours1.setHours(40);
+        workedHours1.setHourlyRate(200);
+       // workedHours1.setVacationPay(12);
+        // 40 timmar, 200 SEK/timme, 12% semesterersättning
+        long userId2 = 2L;
+        WorkedHours workedHours2 = new WorkedHours();
+        workedHours2.setId(2L);
+        workedHours2.setHours(20);
+        workedHours2.setHourlyRate(150);
+       // workedHours2.setVacationPay(10);
+        // 20 timmar, 150 SEK/timme, 10% semesterersättning
+        when(workedHoursRepository.findByIdAndUser_Id(userId, workedHours1.getId())).thenReturn(Optional.of(workedHours1));
+        when(workedHoursRepository.findByIdAndUser_Id(userId2, workedHours2.getId())).thenReturn(Optional.of(workedHours2));
+       double result = calculationService.calculateShiftIncome(userId, workedHours1.getId());
+        double result2 = calculationService.calculateShiftIncome(userId2, workedHours2.getId());
 
+        assertEquals(3000, result2, 0.01);
+        assertEquals(result, 8000, 0.01);
+        verify(workedHoursRepository, times(2)).findByIdAndUser_Id(anyLong(), anyLong());
+
+    }
+/*
     @Test
     void calculateMonthlyIncome() {
     } */
