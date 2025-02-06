@@ -29,7 +29,7 @@ This backend is built using **Spring Boot**, **Java**, **MySQL**, **JWT tokens**
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/SandraKorpi/CSNfribeloppApp.git
+   git clone https://github.com/SandraKorpi/fribeloppsraknarenBackend.git
 2. **Create a MySQL database**:
 Create a new MySql database.
 
