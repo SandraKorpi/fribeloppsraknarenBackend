@@ -33,6 +33,8 @@ This backend is built using **Spring Boot**, **Java**, **MySQL**, **JWT tokens**
 2. **Create a MySQL database**:
 Create a new MySql database.
 
+Note: Please create your own MySQL database and set up your database credentials in the .env file. Do not share sensitive credentials publicly.
+
 3. **Configure environment variables: Create a .env file in the project root and add the following environment variables:**
 .env
 SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/database-name
