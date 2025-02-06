@@ -51,7 +51,7 @@ mvn spring-boot:run
 http://localhost:5000/swagger-ui.html
 
 Access the app: You can now start using the app, which works together with the frontend for a fully functional user app.
-You can access the frontend of the app here: https://github.com/SandraKorpi/CSNklientbootstrap.git
+You can access the frontend of the app here: https://github.com/SandraKorpi/fribeloppsraknarenFrontend.git
 
 **License**
 This project is proprietary. You are not allowed to modify, distribute, or copy the code without permission. All rights are reserved by the original author, Sandra Korpi.
