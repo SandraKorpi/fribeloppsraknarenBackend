@@ -4,7 +4,11 @@
 
 **Fribelopps-räknare, Sandra Korpi JIN23**
 
-This project is a backend application that helps students track their part-time job income and compare it to the CSN income ceiling for the term. The user can enter their worked hours, and the app calculates the total earnings for the term and compares it to the income ceiling. This helps students avoid exceeding the ceiling and becoming liable for repayment to CSN.
+This is my graduation project, a user-friendly web application designed to help students track their income during their studies. In Sweden, students receiving financial aid have an income limit, and exceeding it without reporting can lead to repayments. Many students struggle to monitor their earnings, which often results in unexpected repayment obligations.
+
+The project consists of both a backend program and a frontend application. The backend handles data processing and business logic, while the frontend provides an intuitive and accessible interface for users.
+
+As a student myself, I faced this challenge firsthand and found that there were no effective tools available to help with tracking income. This inspired me to develop this application, an essential solution to a real and pressing problem for students.
 
 This backend is built using **Spring Boot**, **Java**, **MySQL**, **JWT tokens** for authentication, and **Swagger** for documenting and testing the API endpoints. The frontend component can be connected to this backend for a fully functioning user app.
 
