@@ -59,3 +59,21 @@ You can access the frontend of the app here: https://github.com/SandraKorpi/frib
 
 **License**
 This project is proprietary. You are not allowed to modify, distribute, or copy the code without permission. All rights are reserved by the original author, Sandra Korpi.
+
+
+## Konfiguration
+
+Backend läser inställningar från miljövariabler (eller en lokal `.env`, som inte ska checkas in).
+
+| Variabel | Beskrivning |
+|---|---|
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | Databasanslutning |
+| `JWT_SECRET` | Base64-kodad nyckel på minst 32 byte. Appen startar inte utan den |
+| `JWT_EXPIRATION_MS` | Hur länge en inloggning gäller |
+| `CORS_ALLOWED_ORIGINS` | Tillåtna avsändare, kommaseparerat. För iOS-appen med Capacitor: `capacitor://localhost` |
+| `SWAGGER_ENABLED` | `false` i produktion |
+| `DDL_AUTO` | Till exempel `validate` i produktion |
+
+## Fribelopp
+
+Fribeloppet räknas per kalenderhalvår utifrån antal veckor med studiemedel (1 till 26) och studietakt (100, 75 eller 50 procent). Tabellen för 2026 kommer från CSN. Övriga år skalas med prisbasbeloppet och markeras som uppskattade. Användaren kan alltid ange fribeloppet från sitt CSN-beslut själv.

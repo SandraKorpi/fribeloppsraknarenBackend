@@ -50,8 +50,7 @@ public class WorkedHoursService {
         @Transactional
     public WorkedHoursDto saveWorkedHours(WorkedHoursDto workedHoursDto) {
             // Hämta användaren baserat på userId
-            UserDto userDto = userService.findById(workedHoursDto.getUserId());
-            User user = userService.convertToUser(userDto);
+            User user = userService.getUserEntityById(workedHoursDto.getUserId());
             //Räknar ut vilken termin inkomsten tillhör.
             Semester semester = semesterService.getSemesterForMonthAndYear(workedHoursDto.getMonth(), workedHoursDto.getYear());
             // Skapa en ny WorkedHours-instans
@@ -196,7 +195,7 @@ public WorkedHoursDto updateWorkedHoursByUserId(Long userId, int year,  int mont
     @Transactional
 public void deleteHours (long userId, long id)
 {
-    Optional<WorkedHours> workedHoursToDelete = workedHoursRepository.findByIdAndUser_Id(userId, id);
+    Optional<WorkedHours> workedHoursToDelete = workedHoursRepository.findByIdAndUser_Id(id, userId);
     if (workedHoursToDelete.isPresent()) {
         workedHoursRepository.delete(workedHoursToDelete.get());
     } else {

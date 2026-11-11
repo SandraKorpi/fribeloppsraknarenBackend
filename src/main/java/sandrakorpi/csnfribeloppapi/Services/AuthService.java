@@ -7,6 +7,7 @@ import sandrakorpi.csnfribeloppapi.Models.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,16 +39,15 @@ public class AuthService {
     }
 
     public User authenticate(LoginUserDto loginDto) {
-        User user = userService.loadUserByUsername(loginDto.getUserName());
-
-        authenticationManager.authenticate(
+        // Kastar AuthenticationException vid fel uppgifter. Samma fel oavsett om användaren finns eller inte.
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginDto.getUserName(),
                         loginDto.getPassword()
                 )
         );
 
-        return user;
+        return (User) authentication.getPrincipal();
     }
 
     public void changePassword(ChangePasswordDto changePasswordDto, User currentUser) {
@@ -60,6 +60,10 @@ public class AuthService {
         // Kontrollera om de nya lösenorden matchar.
         if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
             throw new IllegalArgumentException("De nya lösenorden matchar inte");
+        }
+
+        if (changePasswordDto.getNewPassword().equals(changePasswordDto.getCurrentPassword())) {
+            throw new IllegalArgumentException("Det nya lösenordet måste skilja sig från det nuvarande");
         }
 
         // Kryptera det nya lösenordet

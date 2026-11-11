@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -28,16 +29,18 @@ public class UserService implements UserDetailsService {
     }
 
     public User saveUser(User user) {
-        if (userRepository.findByUserName(user.getUsername()) != null) {
-            throw new UserAlreadyExistsException("Användaren existerar redan");
+        String email = user.getEmail().trim().toLowerCase(Locale.ROOT);
+        user.setEmail(email);
+
+        if (userRepository.existsByUserName(user.getUsername())) {
+            throw new UserAlreadyExistsException("Användarnamnet är redan taget");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException("E-postadressen är redan registrerad");
         }
 
-        // Tilldela roller
-        if (userRepository.count() == 0) {
-            user.addRole(Role.ROLE_ADMIN); // Första användaren får ADMIN-roll
-        } else {
-            user.addRole(Role.ROLE_USER); // Andra användare får USER-roll
-        }
+        // Alla nya konton är vanliga användare. Admin ges separat i databasen, aldrig via registrering.
+        user.addRole(Role.ROLE_USER);
 
         return userRepository.save(user);
     }
@@ -64,22 +67,23 @@ public class UserService implements UserDetailsService {
         if (updateDto.getUserName() != null
                 && !updateDto.getUserName().equals(userToUpdate.getUsername())
                 && userRepository.existsByUserName(updateDto.getUserName())) {
-            throw new RuntimeException("Användarnamnet är redan taget.");
+            throw new UserAlreadyExistsException("Användarnamnet är redan taget.");
         }
 
         // Validera endast om e-postadressen har ändrats och tillhör en annan användare
-        if (updateDto.getEmail() != null
-                && !updateDto.getEmail().equals(userToUpdate.getEmail())
-                && userRepository.existsByEmail(updateDto.getEmail())) {
-            throw new RuntimeException("E-postadressen är redan registrerad.");
+        String newEmail = updateDto.getEmail() == null ? null : updateDto.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (newEmail != null
+                && !newEmail.equals(userToUpdate.getEmail())
+                && userRepository.existsByEmail(newEmail)) {
+            throw new UserAlreadyExistsException("E-postadressen är redan registrerad.");
         }
 
         // Uppdatera endast om det finns nya värden
         if (updateDto.getUserName() != null) {
             userToUpdate.setUserName(updateDto.getUserName());
         }
-        if (updateDto.getEmail() != null) {
-            userToUpdate.setEmail(updateDto.getEmail());
+        if (newEmail != null) {
+            userToUpdate.setEmail(newEmail);
         }
 
         return userRepository.save(userToUpdate);

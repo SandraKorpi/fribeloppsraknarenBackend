@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import sandrakorpi.csnfribeloppapi.Enums.SemesterType;
 import sandrakorpi.csnfribeloppapi.Models.WorkedHours;
-import sandrakorpi.csnfribeloppapi.Repositories.SemesterRepository;
+import sandrakorpi.csnfribeloppapi.Dtos.FribeloppStatusDto;
 import sandrakorpi.csnfribeloppapi.Repositories.WorkedHoursRepository;
 
 import java.util.*;
@@ -24,7 +24,7 @@ class CalculationServiceTest {
     private WorkedHoursRepository workedHoursRepository;
 
     @Mock
-    private SemesterRepository semesterRepository;
+    private StudyPeriodService studyPeriodService;
 
     @InjectMocks
     private CalculationService calculationService;
@@ -176,4 +176,63 @@ class CalculationServiceTest {
     @Test
     void calculateMonthlyIncome() {
     } */
+
+    // 20 timmar à 200 kr med 10 % semesterersättning = 4 400 kr under januari.
+    private void givenIncomeOf4400InJanuary() {
+        WorkedHours shift = new WorkedHours();
+        shift.setHours(20);
+        shift.setHourlyRate(200);
+        shift.setVacationPay(10);
+
+        when(semesterService.getMonthsForSemesterType(SemesterType.VT)).thenReturn(List.of(1));
+        when(workedHoursRepository.findByUser_IdAndYearAndMonth(userId, 2026, 1)).thenReturn(List.of(shift));
+    }
+
+    @Test
+    void fribeloppStatusWithoutStudyPeriodOnlyReportsIncome() {
+        givenIncomeOf4400InJanuary();
+        when(studyPeriodService.resolve(userId, 2026, SemesterType.VT)).thenReturn(Optional.empty());
+
+        FribeloppStatusDto status = calculationService.getFribeloppStatus(userId, 2026, SemesterType.VT);
+
+        assertFalse(status.isConfigured());
+        assertEquals(4400, status.getIncome());
+        assertNull(status.getFribelopp());
+    }
+
+    @Test
+    void fribeloppStatusUnderTheLimit() {
+        givenIncomeOf4400InJanuary();
+        // 20 veckor heltid 2026 enligt CSN:s tabell.
+        when(studyPeriodService.resolve(userId, 2026, SemesterType.VT)).thenReturn(Optional.of(
+                new StudyPeriodService.ResolvedFribelopp(114_676, FribeloppStatusDto.SOURCE_CSN_TABLE, 20, 100)));
+
+        FribeloppStatusDto status = calculationService.getFribeloppStatus(userId, 2026, SemesterType.VT);
+
+        assertTrue(status.isConfigured());
+        assertEquals(114_676, status.getFribelopp());
+        assertEquals(4400, status.getIncome());
+        assertEquals(110_276, status.getRemaining());
+        assertEquals(0, status.getOver());
+        assertEquals(0, status.getEstimatedReduction());
+        assertFalse(status.isExceeded());
+        assertEquals(220.0, status.getAverageHourlyPay(), 0.01); // 200 kr + 10 % semesterersättning
+        assertEquals(501.3, status.getExtraHours(), 0.01); // 110 276 / 220
+    }
+
+    @Test
+    void fribeloppStatusOverTheLimitEstimatesReduction() {
+        givenIncomeOf4400InJanuary();
+        // Lågt eget fribelopp, 1 000 kr, så att inkomsten överskrider gränsen med 3 400 kr.
+        when(studyPeriodService.resolve(userId, 2026, SemesterType.VT)).thenReturn(Optional.of(
+                new StudyPeriodService.ResolvedFribelopp(1_000, FribeloppStatusDto.SOURCE_OWN_VALUE, 20, 100)));
+
+        FribeloppStatusDto status = calculationService.getFribeloppStatus(userId, 2026, SemesterType.VT);
+
+        assertTrue(status.isExceeded());
+        assertEquals(3_400, status.getOver());
+        assertEquals(0, status.getRemaining());
+        assertEquals(2_074, status.getEstimatedReduction()); // 3 400 * 0,61
+        assertEquals(0.0, status.getExtraHours(), 0.01);
+    }
 }

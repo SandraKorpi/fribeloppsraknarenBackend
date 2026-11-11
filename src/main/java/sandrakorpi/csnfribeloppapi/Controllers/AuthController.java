@@ -1,5 +1,10 @@
 package sandrakorpi.csnfribeloppapi.Controllers;
 
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import sandrakorpi.csnfribeloppapi.Dtos.ChangePasswordDto;
@@ -8,12 +13,11 @@ import sandrakorpi.csnfribeloppapi.Dtos.LoginUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.RegisterUserDto;
 import sandrakorpi.csnfribeloppapi.Models.User;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
+import sandrakorpi.csnfribeloppapi.Security.LoginAttemptService;
 import sandrakorpi.csnfribeloppapi.Services.AuthService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @RestController
@@ -22,61 +26,59 @@ public class AuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthService authService;
+    private final LoginAttemptService loginAttemptService;
 
     @Autowired
     public AuthController(
             JwtTokenProvider jwtTokenProvider,
-            AuthService authenticationService
+            AuthService authenticationService,
+            LoginAttemptService loginAttemptService
     ) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.authService = authenticationService;
+        this.loginAttemptService = loginAttemptService;
     }
 
+    // Valideringsfel ger 400 och upptaget användarnamn eller e-post ger 409, båda via GlobalExceptionHandler.
+    // Registreringsdata, som innehåller lösenordet, får aldrig skrivas till loggen.
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody RegisterUserDto registerUserDto) {
-        try {
-            authService.signup(registerUserDto);
-            System.out.println("Registreringsdata: " + registerUserDto);
-            return ResponseEntity.status(HttpStatus.CREATED).build();
-
-        } catch (Exception exception) {
-            System.out.println("funkade ej Registreringsdata: " + registerUserDto);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterUserDto registerUserDto) {
+        authService.signup(registerUserDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/signIn")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginUserDto loginDto) {
+    public ResponseEntity<LoginResponse> authenticate(@Valid @RequestBody LoginUserDto loginDto) {
+        String attemptKey = loginDto.getUserName().trim().toLowerCase(Locale.ROOT);
+
+        if (loginAttemptService.isBlocked(attemptKey)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+        }
 
         try {
             User authenticatedUser = authService.authenticate(loginDto);
+            loginAttemptService.recordSuccess(attemptKey);
 
-            // Hämta userId direkt från authenticatedUser
-            Long userId = authenticatedUser.getId();
-
-            // Skapa en Map för extra claims
             Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("userId", userId); // Lägg till userId
-
-            // Generera token med extra claims
+            extraClaims.put("userId", authenticatedUser.getId());
             String jwtToken = jwtTokenProvider.generateToken(extraClaims, authenticatedUser);
 
-            LoginResponse loginResponse = LoginResponse.builder()
+            return ResponseEntity.ok(LoginResponse.builder()
                     .token(jwtToken)
                     .expiresIn(jwtTokenProvider.getExpirationTime())
-                    .build();
-
-            return ResponseEntity.ok(loginResponse);
-        } catch (Exception exception) {
+                    .build());
+        } catch (AuthenticationException exception) {
+            // Samma svar oavsett om användarnamnet saknas eller lösenordet är fel.
+            loginAttemptService.recordFailure(attemptKey);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
-    //@AuthenticationPrincipal är en del av sring security och hämtar den auth-usern.
+    //@AuthenticationPrincipal är en del av Spring Security och hämtar den inloggade användaren.
     @PutMapping("/change-password")
-    public void changePassword(@RequestBody ChangePasswordDto changePasswordDto,
-                               @AuthenticationPrincipal User currentUser) {
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordDto changePasswordDto,
+                                               @AuthenticationPrincipal User currentUser) {
         authService.changePassword(changePasswordDto, currentUser);
+        return ResponseEntity.noContent().build();
     }
-
 }

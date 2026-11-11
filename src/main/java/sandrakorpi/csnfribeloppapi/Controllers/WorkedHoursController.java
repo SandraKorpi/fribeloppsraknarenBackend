@@ -1,6 +1,8 @@
 package sandrakorpi.csnfribeloppapi.Controllers;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.validation.Valid;
+import sandrakorpi.csnfribeloppapi.Dtos.FribeloppStatusDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +41,7 @@ public class WorkedHoursController {
 
     // Ger timmar arbetade per termin!
     @GetMapping("/totalForSemester/year/{year}/semestertype/{semesterType}/")
-    public ResponseEntity<Double> getHoursBySemester(@PathVariable SemesterType semesterType, int year, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<Double> getHoursBySemester(@PathVariable SemesterType semesterType, @PathVariable int year, @RequestHeader("Authorization") String token) {
         Long userId = extractUserIdFromToken(token);
         double total = workedHoursService.getWorkedHoursForYearSemester(userId, year, semesterType);
         return ResponseEntity.ok(total);
@@ -71,7 +73,10 @@ public class WorkedHoursController {
 
     // Registrerar timmar för användaren.
     @PostMapping("/addHours")
-    public ResponseEntity<WorkedHoursDto> addWorkedHours(@RequestBody WorkedHoursDto workedHoursDto) {
+    public ResponseEntity<WorkedHoursDto> addWorkedHours(@Valid @RequestBody WorkedHoursDto workedHoursDto,
+                                                         @RequestHeader("Authorization") String token) {
+        // Användaren kommer alltid från inloggningen, aldrig från det klienten skickar.
+        workedHoursDto.setUserId(extractUserIdFromToken(token));
         WorkedHoursDto savedHours = workedHoursService.saveWorkedHours(workedHoursDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedHours);
     }
@@ -115,7 +120,7 @@ public class WorkedHoursController {
             @PathVariable int year,
             @PathVariable int month,
             @PathVariable int date,
-            @RequestBody WorkedHoursDto workedHoursDto) {
+            @Valid @RequestBody WorkedHoursDto workedHoursDto) {
 
         Long extractedUserId = extractUserIdFromToken(token);
         WorkedHoursDto updatedWorkedHours = workedHoursService.updateWorkedHoursByUserId(extractedUserId,year, month, date, workedHoursDto);
@@ -171,14 +176,13 @@ public class WorkedHoursController {
         return ResponseEntity.ok(income);
     }
 
-    // Jämför inkomsten med fribeloppet. VIKTIGASTE METODEN!
-    @GetMapping("/compare-income/{year}/{semesterType}")
-    public ResponseEntity<String> compareSemesterIncome(@RequestHeader("Authorization") String token,
-                                                        @PathVariable int year,
-                                                        @PathVariable SemesterType semesterType) {
+    // Jämför inkomsten med användarens personliga fribelopp (veckor och studietakt). VIKTIGASTE METODEN!
+    @GetMapping("/fribelopp-status/{year}/{semesterType}")
+    public ResponseEntity<FribeloppStatusDto> getFribeloppStatus(@RequestHeader("Authorization") String token,
+                                                                 @PathVariable int year,
+                                                                 @PathVariable SemesterType semesterType) {
         Long userId = extractUserIdFromToken(token);
-        String result = calculationService.compareSemesterIncome(userId, year, semesterType);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(calculationService.getFribeloppStatus(userId, year, semesterType));
     }
 
     // Hjälpfunktion för att extrahera användar-ID från JWT-token

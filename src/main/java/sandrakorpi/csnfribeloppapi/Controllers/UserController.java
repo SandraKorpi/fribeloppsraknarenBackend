@@ -7,14 +7,14 @@ import sandrakorpi.csnfribeloppapi.Dtos.LoginUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UpdateUserDto;
 import sandrakorpi.csnfribeloppapi.Dtos.UserDto;
 import sandrakorpi.csnfribeloppapi.Models.User;
-import sandrakorpi.csnfribeloppapi.Repositories.UserRepository;
 import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
-import sandrakorpi.csnfribeloppapi.Services.AuthService;
+import sandrakorpi.csnfribeloppapi.Services.AccountService;
 import sandrakorpi.csnfribeloppapi.Services.UserService;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import sandrakorpi.csnfribeloppapi.Security.JwtTokenProvider;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +26,12 @@ public class UserController {
 
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AccountService accountService;
 
-    private final UserRepository userRepository;
-
-    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, JwtTokenProvider jwtTokenProvider1, AuthService authService, UserRepository userRepository) {
+    public UserController(UserService userService, JwtTokenProvider jwtTokenProvider, AccountService accountService) {
         this.userService = userService;
-        this.jwtTokenProvider = jwtTokenProvider1;
-        this.userRepository = userRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.accountService = accountService;
     }
 
     //endast admin ska kunna få utalla users.
@@ -49,7 +48,7 @@ public class UserController {
     @DeleteMapping({"/{id}"})
     public ResponseEntity<Void> deleteUser (@PathVariable long id)
     {
-        userService.deleteUser(id);
+        accountService.deleteAccount(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -58,42 +57,39 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<LoginResponse> updateUser(
             @RequestHeader("Authorization") String token,
-            @RequestBody UpdateUserDto updateUserDto,
+            @Valid @RequestBody UpdateUserDto updateUserDto,
             @PathVariable Long id) {
 
-        try {
-            // Extrahera userId från token
-            Long userId = extractUserIdFromToken(token);
+        // Extrahera userId från token
+        Long userId = extractUserIdFromToken(token);
 
-            // Kontrollera att användaren endast kan uppdatera sitt eget konto
-            if (!userId.equals(id)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-
-            // Uppdatera användaren
-            User updatedUser = userService.updateUserEntity(userId, updateUserDto);
-
-            // Skapa extra claims för den nya tokenen
-            Map<String, Object> extraClaims = new HashMap<>();
-            extraClaims.put("userId", updatedUser.getId()); // Lägg till userId i claims
-
-            // Generera ny JWT-token baserad på den uppdaterade användaren
-            String newToken = jwtTokenProvider.generateToken(extraClaims, updatedUser);
-
-            // Skapa LoginResponse med ny token och expiration time
-            LoginResponse loginResponse = LoginResponse.builder()
-                    .token(newToken)
-                    .expiresIn(jwtTokenProvider.getExpirationTime())
-                    .build();
-
-            return ResponseEntity.ok(loginResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        // Kontrollera att användaren endast kan uppdatera sitt eget konto
+        if (!userId.equals(id)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
+        // Uppdatera användaren. Fel, till exempel upptaget användarnamn, hanteras av GlobalExceptionHandler.
+        User updatedUser = userService.updateUserEntity(userId, updateUserDto);
+
+        // Skapa extra claims för den nya tokenen
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", updatedUser.getId());
+
+        // Generera ny JWT-token baserad på den uppdaterade användaren
+        String newToken = jwtTokenProvider.generateToken(extraClaims, updatedUser);
+
+        return ResponseEntity.ok(LoginResponse.builder()
+                .token(newToken)
+                .expiresIn(jwtTokenProvider.getExpirationTime())
+                .build());
     }
 
-
+    // Användaren raderar sitt eget konto och all sin data. Krävs av App Store för appar med konton.
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteOwnAccount(@AuthenticationPrincipal User currentUser) {
+        accountService.deleteAccount(currentUser.getId());
+        return ResponseEntity.noContent().build();
+    }
 
     //Metod så admin kan söka efter user med id.
     @PreAuthorize("hasRole('ROLE_ADMIN')")

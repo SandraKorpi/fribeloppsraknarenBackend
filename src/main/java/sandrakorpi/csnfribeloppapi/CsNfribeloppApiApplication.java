@@ -9,7 +9,7 @@ public class CsNfribeloppApiApplication {
 
     public static void main(String[] args) {
         //laddar variablerna som inte är synliga i application.properties.
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
         dotenv.entries().forEach(entry -> {
             System.setProperty(entry.getKey(), entry.getValue());

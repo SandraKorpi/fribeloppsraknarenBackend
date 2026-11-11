@@ -1,6 +1,7 @@
 package sandrakorpi.csnfribeloppapi.Security;
 
 import io.jsonwebtoken.Claims;
+import jakarta.annotation.PostConstruct;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -27,6 +28,20 @@ public class JwtTokenProvider {
 
     @Value("${security.jwt.expiration-time}")
     private long jwtExpiration;
+
+    /** Stoppar uppstarten om JWT_SECRET saknas, inte är Base64 eller är för kort för HS256. */
+    @PostConstruct
+    void validateSecret() {
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(secretKey);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("JWT_SECRET måste vara Base64-kodad");
+        }
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT_SECRET måste vara minst 32 byte (256 bit) efter Base64-avkodning");
+        }
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

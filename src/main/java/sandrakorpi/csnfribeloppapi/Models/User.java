@@ -1,5 +1,6 @@
 package sandrakorpi.csnfribeloppapi.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import sandrakorpi.csnfribeloppapi.Enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,10 +29,12 @@ public class User implements UserDetails {
     @Column(name = "user_name", nullable = false, unique = true)
     private String userName;
 
+    @JsonIgnore
+    @ToString.Exclude
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @ManyToOne

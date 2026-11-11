@@ -2,6 +2,8 @@ package sandrakorpi.csnfribeloppapi.Controllers;
 
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import sandrakorpi.csnfribeloppapi.Exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +24,14 @@ public class SemesterController {
         this.semesterService = semesterService;
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<SemesterDto> addSemester(@RequestBody SemesterDto semesterDto)
     {
         return ResponseEntity.status(HttpStatus.CREATED).body( semesterService.saveSemester(semesterDto));
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/update/{id}")
     public ResponseEntity<SemesterDto> updateSemester (@PathVariable long id,@RequestBody SemesterDto semesterDto)
     {
@@ -35,6 +39,7 @@ public class SemesterController {
         return ResponseEntity.ok(updatedDto);
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSemester (@PathVariable long id)
     {
@@ -52,6 +57,9 @@ public class SemesterController {
     public ResponseEntity<SemesterDto> getSemesterDetails(@PathVariable int month, @PathVariable int year) {
         // Hämta semester baserat på månad och år
         Semester semester = semesterService.getSemesterForMonthAndYear(month, year);
+        if (semester == null) {
+            throw new ResourceNotFoundException("Ingen termin hittades för " + month + "/" + year);
+        }
 
         // Konvertera semester till SemesterDto och returnera
         SemesterDto semesterDto = semesterService.convertToDto(semester);
